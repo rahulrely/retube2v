@@ -4,12 +4,12 @@ import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 
 const videoSchema = new mongoose.Schema({
-    uploader: { type: mongoose.Schema.Types.ObjectId,
+    uploader: { type: Schema.Types.ObjectId,
         ref: "User",
         required: true
     }, // Secondary User
     approver: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: "User"
     }, // Primary User (Null until approved)
     title: {
@@ -21,7 +21,7 @@ const videoSchema = new mongoose.Schema({
     },
     tags: [{
         type: String
-    }], // Array of tags
+    }], // Array of tagss
     filePath: {
         type: String, required: true
     }, // Local storage before approval

@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 // Define User Schema
-const userSchema = new Schema<IUser>(
+const userSchema = new Schema(
   {
     name: { type: String, required: true },
     email: { type: String, unique: true, required: true, index: true,
@@ -38,6 +38,17 @@ userSchema.index(
   { youtubeChannelId: 1 },
   { unique: true, partialFilterExpression: { youtubeChannelId: { $exists: true, $ne: null } } }
 );
+
+
+// Pre hooks
+
+userSchema.pre("save",async function (next){
+  if(!this.isModified("password")) return next();
+
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password,salt);
+  next();
+})
 
 // Define Methods
 userSchema.methods.isPasswordCorrect = async function (password){

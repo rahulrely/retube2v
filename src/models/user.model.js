@@ -11,6 +11,8 @@ const userSchema = new Schema(
      },
     password: { type: String, required: true },
     role: { type: String, enum: ["primary", "secondary"], required: true },
+
+    
     isVerified: { type: Boolean, default: false },
     forgetPasswordToken: { type: String, default: null },
     forgetPasswordTokenExpiry: { type: Date, default: null },
@@ -25,6 +27,7 @@ const userSchema = new Schema(
     // Secondary User Fields
     primaryUser: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
     inviteToken: { type: String, default: null },
+    videoList: [{ type: mongoose.Schema.Types.ObjectId, ref: "Video", default: null }]
   },
   { timestamps: true }
 );

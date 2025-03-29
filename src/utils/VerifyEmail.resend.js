@@ -1,6 +1,6 @@
-import Resend from "resend";
+import { Resend } from "resend";
 import {generateEmailHTML} from "../email/VerifyMailTemplet.js";
-import APIError from "../utils/APIError.js";
+import { APIError } from "./APIError.js";
 
 // Load API key securely from environment variables
 const resend = new Resend(process.env.RESEND_API_KEY);

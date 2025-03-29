@@ -4,6 +4,7 @@ import {APIResponse} from "../utils/APIResponse.js"
 import User from "../models/user.model.js"
 import crypto from "crypto";
 import jwt  from "jsonwebtoken";
+import { sendVerificationEmail } from "../utils/VerifyEmail.resend.js"
 
 const generateAccessAndRefreshTokens = async(userId) =>{
     try {
@@ -26,7 +27,7 @@ const genVerificationCode = () => {
     return crypto.randomInt(100000, 999999).toString();
 };
 
-const registerUser = asyncHandler(async(req,res) =>{
+const registerUserL = asyncHandler(async(req,res) =>{
     const { name, email , password , role} = req.body
     
     // if(!name === "") throw new APIError(400,"Name is Required");
@@ -88,6 +89,64 @@ const registerUser = asyncHandler(async(req,res) =>{
     )
      
 });
+
+
+const registerUser = asyncHandler(async (req, res) => {
+    const { name, email, password, role } = req.body;
+
+    // Validate input fields
+    if ([name, email, password, role].some((field) => !field?.trim())) {
+        throw new APIError(400, "All fields are required");
+    }
+
+    // Check if user already exists
+    const existedUser = await User.findOne({ email });
+    if (existedUser) {
+        throw new APIError(409, "User already exists");
+    }
+
+    // Generate invite token & verification code
+    const inviteToken = jwt.sign(
+        { email }, // Fixed `this.email` issue
+        process.env.INVITE_TOKEN_SECRET,
+        { expiresIn: process.env.INVITE_TOKEN_EXPIRY }
+    );
+    const verifyCode = genVerificationCode();
+    const verifyCodeExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour expiry
+
+    // Create user
+    const user = await User.create({
+        name,
+        email,
+        password,
+        role,
+        verifyCode,
+        verifyCodeExpiry,
+        ...(role === "primary" && { inviteToken }) // Only add inviteToken for "primary" users
+    });
+
+    console.log(user);
+
+    // Send verification email after user is created
+    try {
+        await sendVerificationEmail(email, name, verifyCode);
+        console.log(`Verification email sent to ${email}`);
+    } catch (err) {
+        console.error(`Email sending failed: ${err.message}`);
+        throw new APIError(500, "User registered but failed to send verification email");
+    }
+
+    // Fetch created user without sensitive data
+    const createdUser = await User.findById(user._id).select("-password -refreshToken -inviteToken");
+    if (!createdUser) {
+        throw new APIError(500, "Unable to retrieve user data after registration");
+    }
+
+    return res.status(201).json(
+        new APIResponse(200, createdUser, "User registered successfully. Verification email sent.")
+    );
+});
+
 
 const verifyPrimaryUser = asyncHandler(async (req, res) => {
     const email = req.email;

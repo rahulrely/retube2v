@@ -6,7 +6,7 @@ import APIError from "../utils/APIError.js";
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Function to send a verification email
-const sendVerificationEmail = async (email,name) => {
+const sendVerificationEmail = async (email,name,verifyCode) => {
 
   // Email HTML template
   const emailHTML = generateEmailHTML(name,verifyCode)

@@ -2,6 +2,8 @@ import  {asyncHandler} from "../utils/asynchandler.js";
 import {APIError} from "../utils/APIError.js"
 import {APIResponse} from "../utils/APIResponse.js"
 import User from "../models/user.model.js"
+import crypto from "crypto";
+import jwt  from "jsonwebtoken";
 
 const generateAccessAndRefreshTokens = async(userId) =>{
     try {
@@ -20,15 +22,12 @@ const generateAccessAndRefreshTokens = async(userId) =>{
     }
 }
 
+const genVerificationCode = () => {
+    return crypto.randomInt(100000, 999999).toString();
+};
 
 const registerUser = asyncHandler(async(req,res) =>{
-    //get user details from frontend
-    //vaildations
-    //check if user exits in db
-    //create user objext and entry in db
-    //remove password
-    // return res
-    const { name, email , password , role, inviteToken} = req.body
+    const { name, email , password , role} = req.body
     
     // if(!name === "") throw new APIError(400,"Name is Required");
 
@@ -44,12 +43,37 @@ const registerUser = asyncHandler(async(req,res) =>{
         throw new APIError(409,"Already Exist User");
     }
 
-    const user = await User.create({
-        name,
-        email,
-        password,
-        role
-    })
+    const inviteToken = jwt.sign(
+        { email: this.email },
+        process.env.INVITE_TOKEN_SECRET,
+        { expiresIn: process.env.INVITE_TOKEN_EXPIRY } 
+    );
+    const verifyCode = genVerificationCode();
+    const verifyCodeExpiry = new Date(Date.now() + 60 * 60 * 1000);
+
+    let user;
+    if(role ==="primary"){
+        user = await User.create({
+            name,
+            email,
+            password,
+            role,
+            verifyCode,
+            verifyCodeExpiry,
+            inviteToken
+        })
+    }else if(role ==="secondary"){
+        user = await User.create({
+            name,
+            email,
+            password,
+            role,
+            verifyCode,
+            verifyCodeExpiry
+        })
+    }
+    
+    console.log(user);
     
     const createdUser = await User.findById(user._id).select(
         "-password -refreshToken -inviteToken"
@@ -63,6 +87,39 @@ const registerUser = asyncHandler(async(req,res) =>{
         new APIResponse(200,createdUser,"User Registered Successfully")
     )
      
+});
+
+const verifyPrimaryUser = asyncHandler(async (req, res) => {
+    const email = req.email;
+    const { verifyCode } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        throw new APIError(404, "User doesn't exist");
+    }
+
+    // ✅ Check if verification code is expired
+    const isCodeValid = user.verifyCodeExpiry > Date.now();
+    if (!isCodeValid) {
+        throw new APIError(400, "Verification code validity expired");
+    }
+
+    // ✅ Check if verify code is correct & not expired
+    if (user.verifyCode === verifyCode) {
+        user.isVerified = true;
+        user.verifyCode = undefined;
+        user.verifyCodeExpiry = undefined;
+        
+        // ✅ Save changes to database
+        await user.save();
+
+        return res.status(200).json(
+            new APIResponse(200, "User is successfully verified")
+        );
+    }
+
+    throw new APIError(400, "Invalid verification code");
 });
 
 const loginUser = asyncHandler(async (req,res) =>{
@@ -140,6 +197,7 @@ const logoutUser =asyncHandler(async(req,res) =>{
 
 export {
     registerUser,
+    verifyPrimaryUser,
     loginUser,
     logoutUser
 };

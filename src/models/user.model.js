@@ -14,20 +14,22 @@ const userSchema = new Schema(
 
     
     isVerified: { type: Boolean, default: false },
-    forgetPasswordToken: { type: String, default: null },
-    forgetPasswordTokenExpiry: { type: Date, default: null },
+    forgetPasswordCode: { type: String, default: null },
+    forgetPasswordCodeExpiry: { type: Date, default: null },
     verifyCode: { type: String, default: null },
     verifyCodeExpiry: { type: Date, default: null },
     refreshToken: { type: String, default: null },
 
+
+    videoList: [{ type: mongoose.Schema.Types.ObjectId, ref: "Video", default: null }],
     // Primary User Fields
     googleId: { type: String, default: null },
     youtubeChannelId: { type: String, default: null },
+    inviteToken: { type: String, default: null },
 
     // Secondary User Fields
     primaryUser: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
-    inviteToken: { type: String, default: null },
-    videoList: [{ type: mongoose.Schema.Types.ObjectId, ref: "Video", default: null }]
+    
   },
   { timestamps: true }
 );
@@ -73,7 +75,6 @@ userSchema.methods.generateRefreshToken = function (){
     { expiresIn: process.env.REFRESH_TOKEN_EXPIRY } 
   );
 };
-
 
 // Export User Model
 const User = mongoose.model("User", userSchema);

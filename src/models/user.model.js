@@ -19,12 +19,14 @@ const userSchema = new Schema(
     verifyCode: { type: String, default: null },
     verifyCodeExpiry: { type: Date, default: null },
     refreshToken: { type: String, default: null },
+    tempToken :{ type: String, default: null },
 
 
     videoList: [ { type: mongoose.Schema.Types.ObjectId, ref: "Video", default: null } ],
     // Primary User Fields
     googleId: { type: String, default: null },
     youtubeChannelId: { type: String, default: null },
+    googleRefreshToken : {type: String, default : null},
     inviteToken: { type: String, default: null },
 
     // Secondary User Fields

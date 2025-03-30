@@ -1,21 +1,24 @@
-import passport from 'passport';
-import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import { google } from "googleapis";
 
+// Setup OAuth2 client
+const oauth2Client = new google.auth.OAuth2(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.GOOGLE_REDIRECT_URL // e.g., "http://localhost:5000/auth/google/callback"
+);
 
-passport.use(new GoogleStrategy({
-  clientID: process.env.GOOGLE_CLIENT_ID,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: process.env.GOOGLE_REDIRECT_URL,
-  passReqToCallback: true,
-},
-function(request, accessToken, refreshToken, profile, done) {
-  return done(null, profile);
-}));
+// Google OAuth2 scopes
+const SCOPES = [
+  "https://www.googleapis.com/auth/youtube.upload",
+  "https://www.googleapis.com/auth/youtube",
+];
 
-passport.serializeUser(function(user, done) {
-  done(null, user);
-});
+export const getAuthURL = () => {
+  return oauth2Client.generateAuthUrl({
+    access_type: "offline", // To get refresh token
+    scope: SCOPES,
+    prompt: "consent", // Always ask for consent
+  });
+};
 
-passport.deserializeUser(function(user, done) {
-  done(null, user);
-});
+export const getGoogleOAuthClient = () => oauth2Client;

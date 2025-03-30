@@ -3,26 +3,35 @@ import {
     loginUser, 
     logoutUser, 
     verifyUser,
+    googleLink,
     primaryAndSecondaryLink, 
     registerUser 
 } from "../controllers/user.controller.js";
 import { verifyJwt } from "../middlewares/auth.js";
-import { getEmail } from "../middlewares/getEmail.js";
+import { getAuthURL } from "../google/auth.js";
 
 const router = Router();
 
 router.route("/register").post(registerUser);
 
 //Email verification route (GET to check, POST to verify)
-router.route("/verify")
-    .get(getEmail, verifyUser) // Example: GET /verify?email=a@a.com
-    .post(getEmail, verifyUser); // Example: POST with { verifyCode: "123456" }
+router.route("/verify").post(verifyUser); // Example: POST with { verifyCode: "123456" }
 //link secondary to primary 
-router.route("/linkprimary")
-    .get(getEmail,primaryAndSecondaryLink) // Example: GET /linkprimary?email=a@a.com
-    .post(getEmail,primaryAndSecondaryLink) // Example: POST with {email :"b@b.com" , inviteToken : "abc"}
+router.route("/linkprimary").post(primaryAndSecondaryLink) // Example: POST with {email :"b@b.com" , inviteToken : "abc"}
 
 router.route("/login").post(loginUser);
+
+///Google ##Start
+
+// Step 1: Redirect user to Google for authentication
+router.route("/google").get( (req, res) => {
+    const url = getAuthURL();
+    res.redirect(url);
+});
+
+// Step 2: Handle Google OAuth Callback
+router.route("/google/callback").get(googleLink);
+///Google ##End
 
 //Secured routes
 router.route("/logout").post(verifyJwt, logoutUser);

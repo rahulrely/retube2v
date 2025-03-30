@@ -83,7 +83,7 @@ const registerUser = asyncHandler(async (req, res) => {
     );
 });
 
-const verifyPrimaryUser = asyncHandler(async (req, res) => {
+const verifyUser = asyncHandler(async (req, res) => {
     const email = req.email;
     const { verifyCode } = req.body;
 
@@ -191,7 +191,7 @@ const logoutUser =asyncHandler(async(req,res) =>{
 
 export {
     registerUser,
-    verifyPrimaryUser,
+    verifyUser,
     loginUser,
     logoutUser
 };

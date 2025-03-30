@@ -4,7 +4,7 @@ import {APIResponse} from "../utils/APIResponse.js"
 import User from "../models/user.model.js"
 import crypto from "crypto";
 import jwt  from "jsonwebtoken";
-import { sendVerificationEmail } from "../utils/VerifyEmail.resend.js"
+import { sendVerificationEmail } from "../utils/VerifyEmail.Resend.js"
 
 const generateAccessAndRefreshTokens = async(userId) =>{
     try {
@@ -43,7 +43,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     // Generate invite token & verification code
     const inviteToken = jwt.sign(
-        { email }, // Fixed `this.email` issue
+        { name , role }, // generating using name and role
         process.env.INVITE_TOKEN_SECRET,
         { expiresIn: process.env.INVITE_TOKEN_EXPIRY }
     );
@@ -64,13 +64,13 @@ const registerUser = asyncHandler(async (req, res) => {
     console.log(user);
 
     // Send verification email after user is created
-    try {
-        await sendVerificationEmail(email, name, verifyCode);
-        console.log(`Verification email sent to ${email}`);
-    } catch (err) {
-        console.error(`Email sending failed: ${err.message}`);
-        throw new APIError(500, "User registered but failed to send verification email");
-    }
+    // try {
+    //     await sendVerificationEmail(email, name, verifyCode);
+    //     console.log(`Verification email sent to ${email}`);
+    // } catch (err) {
+    //     console.error(`Email sending failed: ${err.message}`);
+    //     throw new APIError(500, "User registered but failed to send verification email");
+    // }
 
     // Fetch created user without sensitive data
     const createdUser = await User.findById(user._id).select("-password -refreshToken -inviteToken");
@@ -109,12 +109,68 @@ const verifyUser = asyncHandler(async (req, res) => {
         await user.save();
 
         return res.status(200).json(
-            new APIResponse(200, "User is successfully verified")
+            new APIResponse(200,"User is successfully verified")
         );
     }
 
     throw new APIError(400, "Invalid verification code");
 });
+
+const googleLink = asyncHandler(async(req,res)=>{
+    
+});
+
+const primaryAndSecondaryLink = asyncHandler(async (req, res) => {
+    const secondaryEmail = req.email;
+    const { email, inviteToken } = req.body;
+
+    // Fetch users from DB
+    const primaryUser = await User.findOne({ email });
+    const secondaryUser = await User.findOne({ email: secondaryEmail });
+
+    if (!primaryUser) {
+        throw new APIError(404, "Primary user not found");
+    }
+    if (!secondaryUser) {
+        throw new APIError(404, "Secondary user not found");
+    }
+
+    // Verify JWT
+    let decoded;
+    try {
+        decoded = jwt.verify(inviteToken, process.env.INVITE_TOKEN_SECRET);
+        console.log("Decoded Token:", decoded);
+    } catch (error) {
+        if (error.name === "TokenExpiredError") {
+            throw new APIError(400, "Invite token has expired");
+        } else {
+            throw new APIError(400, "Invalid invite token");
+        }
+    }
+
+    // Validate the token's content
+    if (primaryUser.name !== decoded.name || primaryUser.role !== decoded.role) {
+        throw new APIError(400, "Invalid invite token data");
+    }
+
+    // Link users
+    secondaryUser.primaryUser = primaryUser._id;
+    secondaryUser.inviteToken = undefined;
+    secondaryUser.googleId = undefined;
+    secondaryUser.youtubeId = undefined;
+
+    primaryUser.inviteToken = undefined;
+    primaryUser.primaryUser = undefined;
+
+    // Save changes to DB
+    await secondaryUser.save();
+    await primaryUser.save();
+
+    return res.status(200).json(
+        new APIResponse(200, "Secondary User is Linked to Primary User Successfully")
+    );
+});
+
 
 const loginUser = asyncHandler(async (req,res) =>{
     const { email , password } = req.body;
@@ -161,7 +217,7 @@ const loginUser = asyncHandler(async (req,res) =>{
     )
 
     
-})
+});
 
 const logoutUser =asyncHandler(async(req,res) =>{
     await User.findByIdAndUpdate(
@@ -186,12 +242,14 @@ const logoutUser =asyncHandler(async(req,res) =>{
     .clearCookie("refreshToken",options)
     .json(new APIResponse(200,{},"User Logged Out"));
     
-})
+});
 
 
 export {
     registerUser,
     verifyUser,
+    googleLink,
+    primaryAndSecondaryLink,
     loginUser,
     logoutUser
 };

@@ -21,7 +21,7 @@ const userSchema = new Schema(
     refreshToken: { type: String, default: null },
 
 
-    videoList: [{ type: mongoose.Schema.Types.ObjectId, ref: "Video", default: null }],
+    videoList: [ { type: mongoose.Schema.Types.ObjectId, ref: "Video", default: null } ],
     // Primary User Fields
     googleId: { type: String, default: null },
     youtubeChannelId: { type: String, default: null },

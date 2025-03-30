@@ -27,70 +27,6 @@ const genVerificationCode = () => {
     return crypto.randomInt(100000, 999999).toString();
 };
 
-const registerUserL = asyncHandler(async(req,res) =>{
-    const { name, email , password , role} = req.body
-    
-    // if(!name === "") throw new APIError(400,"Name is Required");
-
-    if(
-        [name,email,password,role].some((field) => field?.trim() === "")
-    ){
-        throw new APIError(400,"All fields are required")
-    }
-
-    const existedUser = await User.findOne({ email}); //to add isVerified
-
-    if(existedUser){
-        throw new APIError(409,"Already Exist User");
-    }
-
-    const inviteToken = jwt.sign(
-        { email: this.email },
-        process.env.INVITE_TOKEN_SECRET,
-        { expiresIn: process.env.INVITE_TOKEN_EXPIRY } 
-    );
-    const verifyCode = genVerificationCode();
-    const verifyCodeExpiry = new Date(Date.now() + 60 * 60 * 1000);
-
-    let user;
-    if(role ==="primary"){
-        user = await User.create({
-            name,
-            email,
-            password,
-            role,
-            verifyCode,
-            verifyCodeExpiry,
-            inviteToken
-        })
-    }else if(role ==="secondary"){
-        user = await User.create({
-            name,
-            email,
-            password,
-            role,
-            verifyCode,
-            verifyCodeExpiry
-        })
-    }
-    
-    console.log(user);
-    
-    const createdUser = await User.findById(user._id).select(
-        "-password -refreshToken -inviteToken"
-    )
-    // console.log(createdUser);
-    if(!createdUser){
-        throw new APIError(500,"Unable to Create User")
-    }
-
-    return res.status(201).json(
-        new APIResponse(200,createdUser,"User Registered Successfully")
-    )
-     
-});
-
-
 const registerUser = asyncHandler(async (req, res) => {
     const { name, email, password, role } = req.body;
 
@@ -147,7 +83,6 @@ const registerUser = asyncHandler(async (req, res) => {
     );
 });
 
-
 const verifyPrimaryUser = asyncHandler(async (req, res) => {
     const email = req.email;
     const { verifyCode } = req.body;
@@ -158,19 +93,19 @@ const verifyPrimaryUser = asyncHandler(async (req, res) => {
         throw new APIError(404, "User doesn't exist");
     }
 
-    // ✅ Check if verification code is expired
+    // Check if verification code is expired
     const isCodeValid = user.verifyCodeExpiry > Date.now();
     if (!isCodeValid) {
         throw new APIError(400, "Verification code validity expired");
     }
 
-    // ✅ Check if verify code is correct & not expired
+    // Check if verify code is correct & not expired
     if (user.verifyCode === verifyCode) {
         user.isVerified = true;
         user.verifyCode = undefined;
         user.verifyCodeExpiry = undefined;
         
-        // ✅ Save changes to database
+        // Save changes to database
         await user.save();
 
         return res.status(200).json(

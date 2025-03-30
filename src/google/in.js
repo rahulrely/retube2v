@@ -48,4 +48,4 @@ app.get('/auth/google/failure', (req, res) => {
   res.send('Failed to authenticate..');
 });
 
-app.listen(5000, () => console.log('listening on port: 5000'));
+app.listen(3000, () => console.log('listening on port: 3000'));

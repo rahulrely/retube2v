@@ -6,10 +6,7 @@ import crypto from "crypto";
 import jwt  from "jsonwebtoken";
 import url from 'url';
 import { oauth2Client } from "../google/auth.js";
-import session from 'express-session';
-import { google } from "googleapis";
-import { sendVerificationEmail } from "../utils/VerifyEmail.Resend.js"; //
-import passport from "passport";
+import { sendVerificationEmail } from "../utils/VerifyEmail.Resend.js";
 
 const generateAccessAndRefreshTokens = async(userId) =>{
     try {
@@ -76,13 +73,13 @@ const registerUser = asyncHandler(async (req, res) => {
     console.log(user);
 
     // Send verification email after user is created
-    // try {
-    //     await sendVerificationEmail(email, name, verifyCode);
-    //     console.log(`Verification email sent to ${email}`);
-    // } catch (err) {
-    //     console.error(`Email sending failed: ${err.message}`);
-    //     throw new APIError(500, "User registered but failed to send verification email");
-    // }
+    try {
+        await sendVerificationEmail(email, name, verifyCode);
+        console.log(`Verification email sent to ${email}`);
+    } catch (err) {
+        console.error(`Email sending failed: ${err.message}`);
+        throw new APIError(500, "User registered but failed to send verification email");
+    }
 
     // Fetch created user without sensitive data
     const createdUser = await User.findById(user._id).select("-password -refreshToken -inviteToken");

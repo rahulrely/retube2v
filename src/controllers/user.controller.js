@@ -145,13 +145,13 @@ const verifyUser = asyncHandler(async (req, res) => {
 
 const googleLink = asyncHandler(async (req, res) => {
     //getting primary user email from tempToken Cookie
-    // const tempToken = req.cookies?.tempToken;
+    const tempToken = req.cookies?.tempToken;
 
-    // if(!tempToken){
-    //     throw new APIError(404,"No temp Cookies");
-    // }
-    // const decodeToken = jwt.verify(tempToken,process.env.TEMP_TOKEN_SECRET)    
-    // const email = decodeToken.email;
+    if(!tempToken){
+        throw new APIError(404,"No temp Cookies");
+    }
+    const decodeToken = jwt.verify(tempToken,process.env.TEMP_TOKEN_SECRET)    
+    const email = decodeToken.email;
     
 
     console.log("Session State:", req.session.state); // Check if session state exists
@@ -160,30 +160,57 @@ const googleLink = asyncHandler(async (req, res) => {
     //GOOGLE #START
     // Handle the OAuth 2.0 server response
     let q = url.parse(req.url, true).query;
-    console.log("url rahu:",q)
+
+    console.log("url rahu:",q) ///remove ##
+
     if (q.error) { // An error response e.g. error=access_denied
         console.log('Error:' + q.error);
     } else if (q.state !== req.session.state) { //check state value
         console.log('State mismatch. Possible CSRF attack');
         res.end('State mismatch. Possible CSRF attack');
     } else { // Get access and refresh tokens (if access_type is offline)
-    let { tokens } = await oauth2Client.getToken(q.code);
-    oauth2Client.setCredentials(tokens);
+        let { tokens } = await oauth2Client.getToken(q.code);
+        oauth2Client.setCredentials(tokens);
 
-    /** Save credential to the global variable in case access token was refreshed.
-    * ACTION ITEM: In a production app, you likely want to save the refresh token
-    *              in a secure persistent database instead. */
-    // userCredential = tokens;
-    // const googleRefreshToken = tokens?.refresh_token;
-    // if(!googleRefreshToken){
-    //     throw new APIError(405,"Refresh Token Not Found in Google Response")
-    // }
-
-    // const user = await User.findOne({ email });
-    // user.googleRefreshToken = googleRefreshToken;
-
-
-    console.log("googleToken rahul:",tokens);
+        /** Save credential to the global variable in case access token was refreshed.
+        * ACTION ITEM: In a production app, you likely want to save the refresh token
+        *              in a secure persistent database instead. */
+        // userCredential = tokens; // test only
+        // User authorized the request. Now, check which scopes were granted.
+        console.log("googleToken rahul:",tokens);
+        const googleRefreshToken = tokens?.refresh_token;
+        const googleAccessToken = tokens?.access_token;
+        if(!googleRefreshToken){
+            throw new APIError(405,"Refresh Token Not Found in Google Response")
+        }
+        if(!googleAccessToken){
+            throw new APIError(405,"Refresh Token Not Found in Google Response")
+        }
+        //check for scope
+        if (
+            !tokens.scope.includes('https://www.googleapis.com/auth/youtube') && 
+            !tokens.scope.includes('https://www.googleapis.com/auth/youtube.upload')
+        ) {
+            throw new APIError(404,"Failed: Required scopes are missing!");
+        }
+        const user = await User.findOne({ email });
+        user.googleRefreshToken = googleRefreshToken; //Saving Google Refresh Token in MongoDB
+        await user.save(); // saving to db
+        
+        const options = {
+            httpOnly : true,
+            secure : true
+        }
+        
+        return res
+        .status(200)
+        .cookie("googleAccessToken",googleAccessToken,options)
+        .cookie("googleRefreshToken",googleRefreshToken,options)
+        .json(
+            200,
+            "Google Linked with Primary User"
+        )
+        .end("Google Linked with Primary User")
     }
 });
 

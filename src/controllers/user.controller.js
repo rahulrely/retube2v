@@ -142,53 +142,63 @@ const verifyUser = asyncHandler(async (req, res) => {
 });
 
 const googleLink = asyncHandler(async (req, res) => {
-    const tempToken = req.cookies?.tempToken;
-
-    const decodeToken = jwt.verify(tempToken,process.env.TEMP_TOKEN_SECRET)
-        
-    if(!tempToken){
-        throw new APIError(404,"No temp Cookies");
-    }
-
     try {
+        const tempToken = req.cookies?.tempToken;
+
+        if (!tempToken) {
+            throw new APIError(404, "No temp Cookies");
+        }
+
+        const decodeToken = jwt.verify(tempToken, process.env.TEMP_TOKEN_SECRET);
+        
         const { code } = req.query;
         if (!code) return res.status(400).json({ message: "Authorization code not found" });
-    
+
+        // Get OAuth client instance once
+        const oauthClient = getGoogleOAuthClient();
+
         // Exchange code for tokens
-        const { tokens } = await getGoogleOAuthClient().getToken(code);
-        getGoogleOAuthClient().setCredentials(tokens);
-    
+        const { tokens } = await oauthClient.getToken(code);
+        if (!tokens.access_token) {
+            throw new APIError(500, "Failed to retrieve access token from Google");
+        }
+        oauthClient.setCredentials({ access_token: tokens.access_token });
+        
+
         // Get user profile info
-        const oauth2 = google.oauth2({ version: "v2", auth: getGoogleOAuthClient() });
+        const oauth2 = google.oauth2({ version: "v2", auth: oauthClient });
         const { data } = await oauth2.userinfo.get();
-    
-        // Find user by email(temp cookies) and update Google details
-        let user = await User.findOne({ email: decodeToken.email }).select('-password -refreshToken');
-    
+
+        // Find user by email
+        let user = await User.findOne({ email: decodeToken.email });
+
         if (!user) {
-            throw new APIError(404,"User not found in google link");
+            throw new APIError(404, "User not found in Google link");
         }
 
         user.googleID = data.id;
-        user.googleRefreshToken = tokens.refresh_token;
+        if (tokens.refresh_token) { // Prevent overwriting with undefined
+            user.googleRefreshToken = tokens.refresh_token;
+        }
         user.tempToken = undefined;
         await user.save();
-    
+
         const options = {
-            httpOnly : true,
-            secure : true,
-        }
+            httpOnly: true,
+            secure: true,
+        };
 
-        return res
-        .status(200)
-        .clearCookie('tempToken',options)
-        .json({ message: "Google Account Linked Successfully", user });
+        res
+            .status(200)
+            .clearCookie('tempToken', options)
+            .json({ message: "Google Account Linked Successfully", user });
 
-    }catch (error) {
+    } catch (error) {
         console.error("Google OAuth Error:", error);
         res.status(500).json({ message: "Google authentication failed" });
     }
 });
+
 
 const primaryAndSecondaryLink = asyncHandler(async (req, res) => {
     const tempToken = req.cookies?.tempToken;

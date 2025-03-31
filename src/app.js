@@ -1,7 +1,7 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-
+import session from 'express-session';
 const app = express();
 
 app.use(cors({
@@ -16,6 +16,12 @@ app.use(express.json({
 app.use(express.urlencoded({extended:true , limit :"16kb"}));
 app.use(express.static("public"));
 app.use(cookieParser());
+
+app.use(session({
+    secret: process.env.EXPRESS_SESSION_SECRET, // Replace with a strong secret
+    resave: false,
+    saveUninitialized: false,
+}));
 
 //routes import
 import userRouter  from "./routes/user.route.js"

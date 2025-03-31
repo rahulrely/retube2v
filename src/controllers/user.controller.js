@@ -1,12 +1,14 @@
 import  {asyncHandler} from "../utils/asynchandler.js";
-import {APIError} from "../utils/APIError.js"
-import {APIResponse} from "../utils/APIResponse.js"
-import User from "../models/user.model.js"
+import {APIError} from "../utils/APIError.js";
+import {APIResponse} from "../utils/APIResponse.js";
+import User from "../models/user.model.js";
 import crypto from "crypto";
 import jwt  from "jsonwebtoken";
+import url from 'url';
+import { oauth2Client } from "../google/auth.js";
+import session from 'express-session';
 import { google } from "googleapis";
-import {getGoogleOAuthClient} from "../google/auth.js"
-import { sendVerificationEmail } from "../utils/VerifyEmail.Resend.js" //
+import { sendVerificationEmail } from "../utils/VerifyEmail.Resend.js"; //
 import passport from "passport";
 
 const generateAccessAndRefreshTokens = async(userId) =>{
@@ -142,63 +144,48 @@ const verifyUser = asyncHandler(async (req, res) => {
 });
 
 const googleLink = asyncHandler(async (req, res) => {
-    try {
-        const tempToken = req.cookies?.tempToken;
+    //getting primary user email from tempToken Cookie
+    // const tempToken = req.cookies?.tempToken;
 
-        if (!tempToken) {
-            throw new APIError(404, "No temp Cookies");
-        }
+    // if(!tempToken){
+    //     throw new APIError(404,"No temp Cookies");
+    // }
+    // const decodeToken = jwt.verify(tempToken,process.env.TEMP_TOKEN_SECRET)    
+    // const email = decodeToken.email;
+    
 
-        const decodeToken = jwt.verify(tempToken, process.env.TEMP_TOKEN_SECRET);
-        
-        const { code } = req.query;
-        if (!code) return res.status(400).json({ message: "Authorization code not found" });
+    console.log("Session State:", req.session.state); // Check if session state exists
+    console.log("Received State:", req.query.state); // Check if state matches
 
-        // Get OAuth client instance once
-        const oauthClient = getGoogleOAuthClient();
+    //GOOGLE #START
+    // Handle the OAuth 2.0 server response
+    let q = url.parse(req.url, true).query;
+    console.log("url rahu:",q)
+    if (q.error) { // An error response e.g. error=access_denied
+        console.log('Error:' + q.error);
+    } else if (q.state !== req.session.state) { //check state value
+        console.log('State mismatch. Possible CSRF attack');
+        res.end('State mismatch. Possible CSRF attack');
+    } else { // Get access and refresh tokens (if access_type is offline)
+    let { tokens } = await oauth2Client.getToken(q.code);
+    oauth2Client.setCredentials(tokens);
 
-        // Exchange code for tokens
-        const { tokens } = await oauthClient.getToken(code);
-        if (!tokens.access_token) {
-            throw new APIError(500, "Failed to retrieve access token from Google");
-        }
-        oauthClient.setCredentials({ access_token: tokens.access_token });
-        
+    /** Save credential to the global variable in case access token was refreshed.
+    * ACTION ITEM: In a production app, you likely want to save the refresh token
+    *              in a secure persistent database instead. */
+    // userCredential = tokens;
+    // const googleRefreshToken = tokens?.refresh_token;
+    // if(!googleRefreshToken){
+    //     throw new APIError(405,"Refresh Token Not Found in Google Response")
+    // }
 
-        // Get user profile info
-        const oauth2 = google.oauth2({ version: "v2", auth: oauthClient });
-        const { data } = await oauth2.userinfo.get();
+    // const user = await User.findOne({ email });
+    // user.googleRefreshToken = googleRefreshToken;
 
-        // Find user by email
-        let user = await User.findOne({ email: decodeToken.email });
 
-        if (!user) {
-            throw new APIError(404, "User not found in Google link");
-        }
-
-        user.googleID = data.id;
-        if (tokens.refresh_token) { // Prevent overwriting with undefined
-            user.googleRefreshToken = tokens.refresh_token;
-        }
-        user.tempToken = undefined;
-        await user.save();
-
-        const options = {
-            httpOnly: true,
-            secure: true,
-        };
-
-        res
-            .status(200)
-            .clearCookie('tempToken', options)
-            .json({ message: "Google Account Linked Successfully", user });
-
-    } catch (error) {
-        console.error("Google OAuth Error:", error);
-        res.status(500).json({ message: "Google authentication failed" });
+    console.log("googleToken rahul:",tokens);
     }
 });
-
 
 const primaryAndSecondaryLink = asyncHandler(async (req, res) => {
     const tempToken = req.cookies?.tempToken;

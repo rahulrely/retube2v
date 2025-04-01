@@ -1,45 +1,30 @@
-import mongoose, { Model ,Document,Schema} from "mongoose";
+import mongoose, { Schema } from "mongoose";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
-
-
 const videoSchema = new mongoose.Schema({
-    uploader: { type: Schema.Types.ObjectId,
-        ref: "User",
-        required: true
-    }, // Secondary User
-    approver: {
-        type: Schema.Types.ObjectId,
-        ref: "User"
-    }, // Primary User (Null until approved)
-    title: {
-        type: String,
-        required: true
-    },
-    description: { 
-        type: String
-    },
-    tags: [{
-        type: String
-    }], // Array of tagss
-    filePath: {
-        type: String, required: true
-    }, // Local storage before approval
-    duration:{
-        type:Number
-    },
-    youtubeVideoId: {
-        type: String
-    }, // YouTube Video ID after approval
-    status: {
-        type: String,
-        enum: ["pending", "approved", "rejected"],
-        default: "pending" },
-    approvedAt: {
-        type: Date
-    }
-  },{
-    timestamps:true
+    uploader: { type : Schema.Types.ObjectId, ref : "User", required : true }, // Secondary User
+
+    approver: { type : Schema.Types.ObjectId, ref : "User" , default : null }, // Primary User (Null until approved)
+
+    title: { type : String, required : true  },
+
+    description: { type : String , default : null },
+
+    tags: [{ type : String }], // Array of tagss
+
+    filePath: {  type : String, required : true }, // Cloud storage before approval // #cloudinary
+
+    duration:{ type : Number , default : null },
+
+    isUploadedOnYoutube : { type : Boolean , default : false },
+
+    youtubeVideoId: { type : String , default : null }, // YouTube Video ID after approval
+
+    status: { type : String, enum: ["pending", "approved", "rejected"], default : "pending" },
+
+    approvedAt: { type : Date } , default : null },
+    {
+        timestamps : true
 });
 
 videoSchema.plugin(mongooseAggregatePaginate);

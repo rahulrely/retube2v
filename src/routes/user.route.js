@@ -9,6 +9,7 @@ import {
 } from "../controllers/user.controller.js";
 import { verifyJwt } from "../middlewares/auth.js";
 import { genGoogleURL } from "../google/auth.js";
+import {uploadOnYT} from "../google/upload.youtube.v2.js"
 
 const router = Router();
 
@@ -31,6 +32,9 @@ router.route("/google/callback").get(googleLink);
 ///Google ##End
 
 //Secured routes
+router.route("/dashboard/upload").post(uploadOnYT);
+
+
 router.route("/logout").post(verifyJwt, logoutUser);
 
 export default router;

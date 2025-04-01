@@ -204,7 +204,6 @@ const googleLink = asyncHandler(async (req, res) => {
         .cookie("googleAccessToken",googleAccessToken,options)
         .cookie("googleRefreshToken",googleRefreshToken,options)
         .json(
-            200,
             "Google Linked with Primary User"
         )
         .end("Google Linked with Primary User")

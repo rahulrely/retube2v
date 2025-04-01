@@ -1,78 +1,86 @@
-// Copyright 2016 Google LLC
-// Licensed under the Apache License, Version 2.0 (the "License");
-// You may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//    http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-import fs from 'fs';
-import path from 'path';
-import readline from 'readline';
+import axios from 'axios';
 import { google } from 'googleapis';
-import { authenticate } from '@google-cloud/local-auth';
-import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+import jwt from 'jsonwebtoken';
+import User from '../models/user.model.js'; // MongoDB User Model
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+dotenv.config();
 
-const youtube = google.youtube('v3');
+const SCOPES = ['https://www.googleapis.com/auth/youtube.upload'];
 
-const runSample = async (fileName) => {
-  try {
-    const auth = await authenticate({
-      keyfilePath: path.join(__dirname, '../oauth2.keys.json'),
-      scopes: [
-        'https://www.googleapis.com/auth/youtube.upload',
-        'https://www.googleapis.com/auth/youtube',
-      ],
-    });
-    google.options({ auth });
+const uploadOnYT = async (req, res) => {
+    try {
+        // Extract JWT token from cookies
+        const accessToken = req.cookies?.accessToken;
 
-    const fileSize = fs.statSync(fileName).size;
-    
-    const res = await youtube.videos.insert(
-      {
-        part: 'id,snippet,status',
-        notifySubscribers: false,
-        requestBody: {
-          snippet: {
-            title: 'Node.js YouTube Upload Test',
-            description: 'Testing YouTube upload via Google APIs Node.js Client',
-          },
-          status: {
-            privacyStatus: 'private',
-          },
-        },
-        media: {
-          body: fs.createReadStream(fileName),
-        },
-      },
-      {
-        onUploadProgress: (evt) => {
-          const progress = (evt.bytesRead / fileSize) * 100;
-          readline.clearLine(process.stdout, 0);
-          readline.cursorTo(process.stdout, 0, null);
-          process.stdout.write(`${Math.round(progress)}% complete`);
-        },
-      }
-    );
-    
-    console.log('\n\n', res.data);
-    return res.data;
-  } catch (error) {
-    console.error('Error uploading video:', error);
-  }
+        if(!accessToken){
+            throw new APIError(404,"No accessToken Cookies");
+        }
+        // Decode JWT to get user's email
+        const decodeToken = jwt.verify(accessToken,process.env.ACCESS_TOKEN_SECRET)    
+        const email = decodeToken.email;
+
+        // Find user in MongoDB and get refresh token
+        const user = await User.findOne({ email});
+
+        if (!user || !user.googleRefreshToken) {
+            return res.status(404).json({ error: 'User not found or missing Google refresh token' });
+        }
+
+        // Generate new Google access token from refresh token
+        const oauth2Client = new google.auth.OAuth2(
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_CLIENT_SECRET,
+            process.env.GOOGLE_CLIENT_URL_UPLOAD
+        );
+        oauth2Client.setCredentials({ refresh_token: user.googleRefreshToken });
+
+        // YouTube API client
+        const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
+
+        // Cloudinary video URL
+        // const {cloudUrl , title ,description} = req.body;
+        const cloudUrl = 'https://res.cloudinary.com/rs14jr/video/upload/v1743518327/3195394-uhd_3840_2160_25fps_lecp8b.mp4'
+
+        if (!cloudUrl) return res.status(400).json({ error: 'Missing Cloudinary video URL' });
+
+        console.log('Streaming video from Cloudinary to YouTube...');
+
+        // Video metadata
+        const videoMetadata = {
+            snippet: {
+                title:'My YouTube Upload via API',
+                description:'Uploaded using YouTube API',
+                tags: ['Cloudinary', 'YouTube API', 'Streaming Upload'],
+                categoryId: '22', // Default: People & Blogs
+            },
+            status: {
+                privacyStatus: 'private',
+            },
+        };
+
+        // Stream the video directly from Cloudinary to YouTube
+        const response = await axios({
+            method: 'GET',
+            url: cloudUrl,
+            responseType: 'stream',
+        });
+
+        const uploadResponse = await youtube.videos.insert({
+            part: 'snippet,status',
+            requestBody: videoMetadata,
+            media: {
+                body: response.data, // Directly passing the readable stream
+            },
+        });
+
+        console.log('Video uploaded successfully! Video ID:', uploadResponse.data.id);
+
+        res.status(200).json({ message: 'Upload successful', videoId: uploadResponse.data.id });
+    } catch (error) {
+        console.error('Error uploading video:', error);
+        res.status(500).json({ error: 'Failed to upload video', details: error.message });
+    }
 };
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  const fileName = process.argv[2];
-  runSample(fileName).catch(console.error);
-}
-
-export default runSample;
+export { uploadOnYT };

@@ -4,6 +4,7 @@ import {APIResponse} from "../utils/APIResponse.js";
 import Video from "../models/video.model.js";
 import fs from "fs";
 import {uploadOnCloudinary} from "../utils/cloundinary.js"
+import nanoid from 'nanoid';
 
 
 const videoUploadOnCloud = asyncHandler(async (req,res)=>{ 
@@ -40,8 +41,10 @@ const videoUploadOnCloud = asyncHandler(async (req,res)=>{
     if (!videofile) {
         throw new APIError(500,"Upload on Cloundinary Failed");
     }
+    const unicode = nanoid(10);
 
     const video = await Video.create({
+        unicode,
         title,
         description,
         filePath : videofile.url,
@@ -52,13 +55,18 @@ const videoUploadOnCloud = asyncHandler(async (req,res)=>{
 
     console.log(video);
 
+    user.videoList.push(video._id);
+    user.primaryUser.videoList.push(video._id);
+
+    await user.save(); // saving it
+
     // Delete local file after successful upload
     fs.unlinkSync(videoLocalPath);
     
     return res
     .status(200)
     .json( 
-        new APIResponse (200,"Video uploaded successfully")
+        new APIResponse (200,{ "Video DB Unicode" : video.unicode },"Video uploaded successfully")
     );
 });
 

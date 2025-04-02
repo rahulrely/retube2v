@@ -3,6 +3,8 @@ import { google } from 'googleapis';
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import User from '../models/user.model.js'; // MongoDB User Model
+import Video from '../models/video.model.js'; // MongoDB Video Model
+
 
 dotenv.config();
 
@@ -28,7 +30,6 @@ const uploadOnYT = async (req, res) => {
         const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
 
         // Cloudinary video URL
-        // const {cloudUrl , title ,description} = req.body;
         const cloudUrl = 'https://res.cloudinary.com/rs14jr/video/upload/v1743518327/3195394-uhd_3840_2160_25fps_lecp8b.mp4'
 
         if (!cloudUrl) return res.status(400).json({ error: 'Missing Cloudinary video URL' });

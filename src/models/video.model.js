@@ -2,9 +2,12 @@ import mongoose, { Schema } from "mongoose";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const videoSchema = new mongoose.Schema({
-    uploader: { type : Schema.Types.ObjectId, ref : "User", required : true }, // Secondary User
 
-    approver: { type : Schema.Types.ObjectId, ref : "User" , required : true }, // Primary User
+    unicode :{type : String , required : true ,index : true , unique : true},
+
+    uploader: { type : String, required : true }, // Secondary User Email
+
+    approver: { type : String, default : null }, // Primary User Email
 
     title: { type : String, required : true  },
 

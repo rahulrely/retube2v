@@ -141,15 +141,24 @@ const verifyUser = asyncHandler(async (req, res) => {
 });
 
 const googleLink = asyncHandler(async (req, res) => {
-    //getting primary user email from tempToken Cookie
+
+    const accEmail = req?.user?.email; // Email from auth middleware (access token)
+
+    // Getting primary user email from tempToken cookie
     const tempToken = req.cookies?.tempToken;
 
-    if(!tempToken){
-        throw new APIError(404,"No temp Cookies");
+    if (!tempToken || !accEmail) {
+        throw new APIError(404, "No temp Cookies or Access Token");
     }
-    const decodeToken = jwt.verify(tempToken,process.env.TEMP_TOKEN_SECRET)    
-    const email = decodeToken.email;
-    
+
+    let decodeToken;
+    try {
+        decodeToken = jwt.verify(tempToken, process.env.TEMP_TOKEN_SECRET);
+    } catch (error) {
+        throw new APIError(401, "Invalid or Expired Temp Token");
+    }
+
+    const email = accEmail || decodeToken.email;   
 
     console.log("Session State:", req.session.state); // Check if session state exists
     console.log("Received State:", req.query.state); // Check if state matches
@@ -405,7 +414,6 @@ const logoutUser =asyncHandler(async(req,res) =>{
     .json(new APIResponse(200,{},"User Logged Out"));
     
 });
-
 
 export {
     registerUser,

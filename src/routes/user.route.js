@@ -10,7 +10,6 @@ import {
 } from "../controllers/user.controller.js";
 import { verifyJwt } from "../middlewares/auth.js";
 import { genGoogleURL } from "../google/auth.js";
-import {uploadOnYT} from "../google/upload.youtube.v2.js"
 
 const router = Router();
 
@@ -29,7 +28,7 @@ router.route("/login").post(loginUser);
 router.route("/google").get(genGoogleURL);
 
 // Step 2: Handle Google OAuth Callback
-router.route("/google/callback").get(googleLink);
+router.route("/google/callback").get(verifyJwt,googleLink);
 
 ///Google ##End
 

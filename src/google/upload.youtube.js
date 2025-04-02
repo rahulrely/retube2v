@@ -10,18 +10,7 @@ const SCOPES = ['https://www.googleapis.com/auth/youtube.upload'];
 
 const uploadOnYT = async (req, res) => {
     try {
-        // Extract JWT token from cookies
-        const accessToken = req.cookies?.accessToken;
-
-        if(!accessToken){
-            throw new APIError(404,"No accessToken Cookies");
-        }
-        // Decode JWT to get user's email
-        const decodeToken = jwt.verify(accessToken,process.env.ACCESS_TOKEN_SECRET)    
-        const email = decodeToken.email;
-
-        // Find user in MongoDB and get refresh token
-        const user = await User.findOne({ email});
+        const user = req?.user;
 
         if (!user || !user.googleRefreshToken) {
             return res.status(404).json({ error: 'User not found or missing Google refresh token' });

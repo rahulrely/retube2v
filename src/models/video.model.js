@@ -4,7 +4,7 @@ import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 const videoSchema = new mongoose.Schema({
     uploader: { type : Schema.Types.ObjectId, ref : "User", required : true }, // Secondary User
 
-    approver: { type : Schema.Types.ObjectId, ref : "User" , default : null }, // Primary User (Null until approved)
+    approver: { type : Schema.Types.ObjectId, ref : "User" , required : true }, // Primary User
 
     title: { type : String, required : true  },
 

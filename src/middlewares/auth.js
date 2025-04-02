@@ -25,5 +25,4 @@ export const verifyJwt = asyncHandler(async(req,res,next)=>{
     } catch (error) {
         throw new APIError(500,error?.message || "Went Wrong in auth logged")
     }
-
 })

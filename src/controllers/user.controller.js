@@ -299,7 +299,7 @@ const loginUser = asyncHandler(async (req,res) =>{
 
     //if db call is expensive then dont do below call and update previous user #04
 
-    const loggedInUser =await User.findById(user._id).select("-password -refreshToken -inviteToken") //#04
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken -inviteToken") //#04
 
     const options = {
         httpOnly : true,
@@ -323,6 +323,58 @@ const loginUser = asyncHandler(async (req,res) =>{
     
 });
 
+const passwordReset = asyncHandler(async (req, res) => {
+    
+    const user = req.user; // middleware incoming
+
+    const email = user.email;
+    const name = user.name;
+
+    // Generate verification code
+    const verifyCodeGen = genVerificationCode();
+    const verifyCodeExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
+
+    
+    user.verifyCode = verifyCodeGen;
+    user.verifyCodeExpiry = verifyCodeExpiry;
+
+    await user.save({ validateBeforeSave: false }); // Save code in DB
+
+    // Sending verification email
+    try {
+        await sendVerificationEmail(email, name, verifyCodeGen);
+        console.log(`Verification email sent to ${email}`);
+    } catch (err) {
+        console.error(`Email sending failed: ${err.message}`);
+        throw new APIError(500, "User registered but failed to send verification email");
+    }
+
+    // Get user input from body
+    const { newPassword, verifyCode } = req.body;
+
+    // Retrieve stored expiry from DB
+    const isCodeValid = user.verifyCodeExpiry && user.verifyCodeExpiry > Date.now();
+    if (!isCodeValid) {
+        throw new APIError(400, "Verification code validity expired");
+    }
+
+    // Verify if entered code matches stored code
+    if (user.verifyCode !== verifyCode) {
+        throw new APIError(400, "Invalid verification code");
+    }
+
+    // Updated password
+    user.password = newPassword;
+    user.verifyCode = undefined; // Removed verification code after use
+    user.verifyCodeExpiry = undefined;
+
+    await user.save({ validateBeforeSave: false });
+
+    return res
+        .status(200)
+        .json(new APIResponse(200, {}, "Password changed successfully"));
+
+});
 const logoutUser =asyncHandler(async(req,res) =>{
     await User.findByIdAndUpdate(
         req.user._id,
@@ -355,5 +407,6 @@ export {
     googleLink,
     primaryAndSecondaryLink,
     loginUser,
+    passwordReset,
     logoutUser
 };

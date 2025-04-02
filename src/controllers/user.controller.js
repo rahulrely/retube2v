@@ -335,8 +335,8 @@ const passwordReset = asyncHandler(async (req, res) => {
     const verifyCodeExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
 
     
-    user.verifyCode = verifyCodeGen;
-    user.verifyCodeExpiry = verifyCodeExpiry;
+    user.forgetPasswordCode = verifyCodeGen;
+    user.forgetPasswordCodeExpiry = verifyCodeExpiry;
 
     await user.save({ validateBeforeSave: false }); // Save code in DB
 
@@ -352,29 +352,35 @@ const passwordReset = asyncHandler(async (req, res) => {
     // Get user input from body
     const { newPassword, verifyCode } = req.body;
 
+    const freshUser = await User.findById(user._id);
+
+    if (!freshUser) {
+        throw new APIError(400, "User not found");
+    }
     // Retrieve stored expiry from DB
-    const isCodeValid = user.verifyCodeExpiry && user.verifyCodeExpiry > Date.now();
+    const isCodeValid = freshUser.verifyCodeExpiry && freshUser.verifyCodeExpiry > Date.now();
     if (!isCodeValid) {
         throw new APIError(400, "Verification code validity expired");
     }
 
     // Verify if entered code matches stored code
-    if (user.verifyCode !== verifyCode) {
+    if (freshUser.forgetPasswordCode !== verifyCode) {
         throw new APIError(400, "Invalid verification code");
     }
 
     // Updated password
-    user.password = newPassword;
-    user.verifyCode = undefined; // Removed verification code after use
-    user.verifyCodeExpiry = undefined;
+    freshUser.password = newPassword;
+    freshUser.forgetPasswordCode = null; // Removed verification code after use
+    freshUser.forgetPasswordCodeExpiry = null;
 
-    await user.save({ validateBeforeSave: false });
+    await freshUser.save({ validateBeforeSave: false });
 
     return res
         .status(200)
         .json(new APIResponse(200, {}, "Password changed successfully"));
 
 });
+
 const logoutUser =asyncHandler(async(req,res) =>{
     await User.findByIdAndUpdate(
         req.user._id,

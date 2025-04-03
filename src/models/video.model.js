@@ -13,7 +13,7 @@ const videoSchema = new mongoose.Schema({
 
     description: { type : String , default : null },
 
-    tags: [{ type : String }], // Array of tagss
+    tags: [{ type : String }], // Array of tags
 
     filePath: {  type : String, required : true }, // Cloud storage before approval // #cloudinary
 

@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import User from '../models/user.model.js'; // MongoDB User Model
 import Video from '../models/video.model.js'; // MongoDB Video Model
+import { APIError } from '../utils/APIError.js';
 
 
 dotenv.config();
@@ -12,10 +13,14 @@ const SCOPES = ['https://www.googleapis.com/auth/youtube.upload'];
 
 const uploadOnYT = async (req, res) => {
     try {
-        const user = req?.user;
+        const user = req?.user; 
 
         if (!user || !user.googleRefreshToken) {
-            return res.status(404).json({ error: 'User not found or missing Google refresh token' });
+            return res
+                .status(404)
+                .json( 
+                    new APIError(404,'User not found or missing Google refresh token')
+                );
         }
 
         // Generate new Google access token from refresh token

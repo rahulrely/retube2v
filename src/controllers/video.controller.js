@@ -4,7 +4,7 @@ import {APIResponse} from "../utils/APIResponse.js";
 import Video from "../models/video.model.js";
 import fs from "fs";
 import {uploadOnCloudinary} from "../utils/cloundinary.js"
-import nanoid from 'nanoid';
+import { nanoid } from 'nanoid';
 
 
 const videoUploadOnCloud = asyncHandler(async (req,res)=>{ 

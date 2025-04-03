@@ -5,6 +5,7 @@ import {
 import { verifyJwt } from "../middlewares/auth.js";
 import { primaryCheck , secondaryCheck } from "../middlewares/checkRole.js"
 import {uploadOnYT} from "../google/upload.youtube.js"
+import { upload } from "../middlewares/multer.js";
 
 const router = Router();
 
@@ -24,3 +25,5 @@ router.route("/youtube/upload")
         primaryCheck,
         uploadOnYT
     ); // Don't hit this route// ## very costly
+
+export default router;

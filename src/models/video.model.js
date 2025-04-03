@@ -1,7 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
-const videoSchema = new mongoose.Schema({
+const videoSchema = new Schema({
 
     unicode :{type : String , required : true ,index : true , unique : true},
 
@@ -25,7 +25,7 @@ const videoSchema = new mongoose.Schema({
 
     status: { type : String, enum: ["pending", "approved", "rejected"], default : "pending" },
 
-    approvedAt: { type : Date } , default : null },
+    approvedAt: { type : Date , default : null} },
     {
         timestamps : true
 });

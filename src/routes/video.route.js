@@ -19,7 +19,7 @@ router.route("/cloud/upload")
     ); // Secondary User Upload on Cloud #Cloundinary
 
 
-router.route("/youtube/upload")
+router.route("/youtube/approval")
     .post(
         verifyJwt,
         primaryCheck,

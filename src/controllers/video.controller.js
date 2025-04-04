@@ -28,7 +28,6 @@ const videoUploadOnCloud = asyncHandler(async (req,res)=>{
         tags = ["Retube", "Retube APP"];
     }
 
-    
     //video local path
     const videoLocalPath = req.files?.videoFile?.path; // incoming from multer middleware
 
@@ -41,15 +40,16 @@ const videoUploadOnCloud = asyncHandler(async (req,res)=>{
     if (!videofile) {
         throw new APIError(500,"Upload on Cloundinary Failed");
     }
-    const unicode = nanoid(10);
+    const vid = nanoid(10);
 
     const video = await Video.create({
-        unicode,
+        vid,
         title,
         description,
         filePath : videofile.url,
-        uploader : user._id,
-        approver : user.primaryUser._id,
+        uploader : user.email,
+        approver : user.primaryUser.email,
+        cloudinaryPublicID :videofile.public_id,
         tags,
     });
 

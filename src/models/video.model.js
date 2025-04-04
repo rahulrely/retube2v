@@ -3,11 +3,11 @@ import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const videoSchema = new Schema({
 
-    unicode :{type : String , required : true ,index : true , unique : true},
+    vid :{type : String , required : true ,index : true , unique : true},
 
     uploader: { type : String, required : true }, // Secondary User Email
 
-    approver: { type : String, default : null }, // Primary User Email
+    approver: { type : String, required : true  }, // Primary User Email
 
     title: { type : String, required : true  },
 
@@ -17,7 +17,7 @@ const videoSchema = new Schema({
 
     filePath: {  type : String, required : true }, // Cloud storage before approval // #cloudinary
 
-    duration:{ type : Number , default : null },
+    cloudinaryPublicID: {type : String , required : true} ,
 
     isUploadedOnYoutube : { type : Boolean , default : false },
 

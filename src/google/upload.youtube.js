@@ -1,11 +1,10 @@
 import axios from 'axios';
 import { google } from 'googleapis';
 import dotenv from 'dotenv';
-import jwt from 'jsonwebtoken';
-import User from '../models/user.model.js'; // MongoDB User Model
 import Video from '../models/video.model.js'; // MongoDB Video Model
 import { APIError } from '../utils/APIError.js';
-
+import {deleteVideoFromCloudinary} from "../utils/cloundinary.js";
+import { APIResponse } from '../utils/APIResponse.js';
 
 dotenv.config();
 
@@ -13,8 +12,33 @@ const SCOPES = ['https://www.googleapis.com/auth/youtube.upload'];
 
 const uploadOnYT = async (req, res) => {
     try {
-        const user = req?.user; 
+        const { vid } = req?.query;
 
+        if(!vid){
+            throw new APIError(404, "Video ID not provided in request.");
+        }
+
+        const video = await Video.findOne({ vid });
+        if(!video){
+            throw new APIError(404,"Video Not Found in DB");
+        }
+
+        const user = req?.user;
+        if(!user){
+            throw new APIError(404,"User Not Found through Middleware");
+        }
+
+        if(video.approver !== user.email){
+            throw new APIError(403, "Forbidden: You are not allowed to upload this video.");
+        }
+        
+        let { title , description , tags } = req.body;
+
+        title = title && title.trim() !== "" ? title : video.title;
+        description = description && description.trim() !== "" ? description : video.description;
+        tags = Array.isArray(tags) ? tags : video.tags;
+
+        
         if (!user || !user.googleRefreshToken) {
             return res
                 .status(404)
@@ -34,19 +58,18 @@ const uploadOnYT = async (req, res) => {
         // YouTube API client
         const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
 
-        // Cloudinary video URL
-        const cloudUrl = 'https://res.cloudinary.com/rs14jr/video/upload/v1743518327/3195394-uhd_3840_2160_25fps_lecp8b.mp4'
+        const cloudUrl = video.filePath; // url from video model of cloud
 
-        if (!cloudUrl) return res.status(400).json({ error: 'Missing Cloudinary video URL' });
+        if (!cloudUrl) return res.status(400).json(new APIResponse(400,'Missing Cloudinary video URL'));
 
         console.log('Streaming video from Cloudinary to YouTube...');
 
         // Video metadata
         const videoMetadata = {
             snippet: {
-                title:'My YouTube Upload via API',
-                description:'Uploaded using YouTube API',
-                tags: ['Cloudinary', 'YouTube API', 'Streaming Upload'],
+                title : title,
+                description : description ,
+                tags: tags,
                 categoryId: '22', // Default: People & Blogs
             },
             status: {
@@ -70,6 +93,22 @@ const uploadOnYT = async (req, res) => {
         });
 
         console.log('Video uploaded successfully! Video ID:', uploadResponse.data.id);
+
+        video.youtubeVideoId = uploadResponse.data.id;
+        video.filePath = undefined;
+        video.isUploadedOnYoutube = true;
+        video.status = "approved";
+        video.approvedAt = Date.now();
+        if (video.cloudinaryPublicId) { 
+            try {
+                await deleteVideoFromCloudinary(video.cloudinaryPublicId);
+                video.cloudinaryPublicId = undefined;
+            } catch (error) {
+                console.error('Error deleting video from Cloudinary:', error);
+            }
+        }
+    
+        await video.save();
 
         res.status(200).json({ message: 'Upload successful', videoId: uploadResponse.data.id });
     } catch (error) {

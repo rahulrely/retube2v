@@ -29,7 +29,7 @@ const videoUploadOnCloud = asyncHandler(async (req,res)=>{
     }
 
     //video local path
-    const videoLocalPath = req.files?.videoFile?.path; // incoming from multer middleware
+    const videoLocalPath = req.file?.videoFile?.path; // incoming from multer middleware
 
     if (!videoLocalPath) {
         throw new APIError(400, "Video is required");

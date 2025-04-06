@@ -5,6 +5,7 @@ import Video from "../models/video.model.js";
 import fs from "fs";
 import {uploadOnCloudinary} from "../utils/cloundinary.js"
 import { nanoid } from 'nanoid';
+import User from "../models/user.model.js";
 
 
 const videoUploadOnCloud = asyncHandler(async (req,res)=>{ 
@@ -29,7 +30,7 @@ const videoUploadOnCloud = asyncHandler(async (req,res)=>{
     }
 
     //video local path
-    const videoLocalPath = req.file?.videoFile?.path; // incoming from multer middleware
+    const videoLocalPath = req.file?.path; // incoming from multer middleware
 
     if (!videoLocalPath) {
         throw new APIError(400, "Video is required");
@@ -42,13 +43,15 @@ const videoUploadOnCloud = asyncHandler(async (req,res)=>{
     }
     const vid = nanoid(10);
 
+    const primaryUser = await User.findById(user.primaryUser);
+
     const video = await Video.create({
         vid,
         title,
         description,
         filePath : videofile.url,
         uploader : user.email,
-        approver : user.primaryUser.email,
+        approver : primaryUser.email,
         cloudinaryPublicID :videofile.public_id,
         tags,
     });
@@ -56,17 +59,19 @@ const videoUploadOnCloud = asyncHandler(async (req,res)=>{
     console.log(video);
 
     user.videoList.push(video._id);
-    user.primaryUser.videoList.push(video._id);
+    primaryUser.videoList.push(video._id);
 
     await user.save(); // saving it
 
     // Delete local file after successful upload
-    fs.unlinkSync(videoLocalPath);
+    // fs.unlinkSync(videoLocalPath);
     
+    const resData = { "Video DB Unicode" : video.unicode }
+
     return res
     .status(200)
     .json( 
-        new APIResponse (200,{ "Video DB Unicode" : video.unicode },"Video uploaded successfully")
+        new APIResponse (200,resData,"Video uploaded successfully")
     );
 });
 

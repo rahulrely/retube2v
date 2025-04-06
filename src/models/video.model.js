@@ -15,7 +15,7 @@ const videoSchema = new Schema({
 
     tags: [{ type : String }], // Array of tags
 
-    filePath: {  type : String, required : true }, // Cloud storage before approval // #cloudinary
+    filePath: {  type : String}, // Cloud storage before approval // #cloudinary
 
     cloudinaryPublicID: {type : String , required : true} ,
 

@@ -73,13 +73,13 @@ const registerUser = asyncHandler(async (req, res) => {
     console.log(user);
 
     // Send verification email after user is created
-    try {
-        await sendVerificationEmail(email, name, verifyCode);
-        console.log(`Verification email sent to ${email}`);
-    } catch (err) {
-        console.error(`Email sending failed: ${err.message}`);
-        throw new APIError(500, "User registered but failed to send verification email");
-    }
+    // try {
+    //     await sendVerificationEmail(email, name, verifyCode);
+    //     console.log(`Verification email sent to ${email}`);
+    // } catch (err) {
+    //     console.error(`Email sending failed: ${err.message}`);
+    //     throw new APIError(500, "User registered but failed to send verification email");
+    // }
 
     // Fetch created user without sensitive data
     const createdUser = await User.findById(user._id).select("-password -refreshToken -inviteToken");
@@ -120,7 +120,7 @@ const verifyUser = asyncHandler(async (req, res) => {
     // Check if verification code is expired
     const isCodeValid = user.verifyCodeExpiry > Date.now();
     if (!isCodeValid) {
-        throw new APIError(400, "Verification code validity expired");
+        throw new APIError(400, `Verification code validity expired ${Date.now()}`);
     }
 
     // Check if verify code is correct & not expired
@@ -144,21 +144,11 @@ const googleLink = asyncHandler(async (req, res) => {
 
     const accEmail = req?.user?.email; // Email from auth middleware (access token)
 
-    // Getting primary user email from tempToken cookie
-    const tempToken = req.cookies?.tempToken;
-
-    if (!tempToken || !accEmail) {
-        throw new APIError(404, "No temp Cookies or Access Token");
+    if (!accEmail) {
+        throw new APIError(404, "No Access Token");
     }
 
-    let decodeToken;
-    try {
-        decodeToken = jwt.verify(tempToken, process.env.TEMP_TOKEN_SECRET);
-    } catch (error) {
-        throw new APIError(401, "Invalid or Expired Temp Token");
-    }
-
-    const email = accEmail || decodeToken.email;   
+    const email = accEmail;   
 
     console.log("Session State:", req.session.state); // Check if session state exists
     console.log("Received State:", req.query.state); // Check if state matches

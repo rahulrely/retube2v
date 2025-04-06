@@ -70,6 +70,40 @@ const videoUploadOnCloud = asyncHandler(async (req,res)=>{
     );
 });
 
+const getVideoList = asyncHandler(async (req, res) => {
+    const user = req?.user; // From middleware
+
+    if (!user) {
+        throw new APIError(404, "User not found.");
+    }
+
+});
+
+
+const getVideo = asyncHandler(async(req,res)=>{
+    const { vid } = req.params;
+
+    const video = await Video.findOne({ vid });
+
+    if(!video){
+        throw new APIError(404,"Video Not Found.");
+    }
+    
+    return res
+        .status(200)
+        .json(new APIResponse(
+            200,
+            {   "vid" : video?.vid,
+                "url" : video?.filePath,
+                "cloudinaryPublicID" : video?.cloudinaryPublicID
+            },
+            "Video Successfully fetched."
+    ));
+    
+});
+
 export {
-    videoUploadOnCloud
+    videoUploadOnCloud,
+    getVideo,
+    getVideoList
 }

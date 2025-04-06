@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { 
-    videoUploadOnCloud
+    videoUploadOnCloud,
+    getVideo,
+    getVideoList
 } from "../controllers/video.controller.js";
 import { verifyJwt } from "../middlewares/auth.js";
 import { primaryCheck , secondaryCheck } from "../middlewares/checkRole.js"
@@ -17,6 +19,20 @@ router.route("/cloud/upload")
         upload.single("videoFile")
         ,videoUploadOnCloud
     ); // Secondary User Upload on Cloud #Cloundinary
+
+router.route("/:vid")
+    .get(
+        verifyJwt,
+        primaryCheck,
+        getVideoList
+    );
+
+router.route("/:vid")
+    .get(
+        verifyJwt,
+        primaryCheck,
+        getVideo
+    );
 
 
 router.route("/youtube/approval")

@@ -26,10 +26,12 @@ app.use(session({
 //routes import
 import userRouter  from "./routes/user.route.js"
 import videoRouter from "./routes/video.route.js"
+import rawVideosRouter from "./routes/raw.video.route.js";
 // import dashboardRouter from "./routes/dashboard.route.js"
 //routes declarations
 app.use("/api/v1/users",userRouter);
 app.use("/api/v1/videos",videoRouter);
+app.use("/api/v1/raw",rawVideosRouter);
 // app.use("/api/v1/dashboard",dashboardRouter);
 
 

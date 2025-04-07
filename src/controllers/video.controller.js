@@ -4,8 +4,10 @@ import {APIResponse} from "../utils/APIResponse.js";
 import Video from "../models/video.model.js";
 import fs from "fs";
 import {uploadOnCloudinary} from "../utils/cloundinary.js"
-import { nanoid } from 'nanoid';
+import { nanoid ,customAlphabet} from 'nanoid';
 import User from "../models/user.model.js";
+
+const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890', 10)
 
 
 const videoUploadOnCloud = asyncHandler(async (req,res)=>{ 
@@ -41,9 +43,9 @@ const videoUploadOnCloud = asyncHandler(async (req,res)=>{
     if (!videofile) {
         throw new APIError(500,"Upload on Cloundinary Failed");
     }
-    const vid = nanoid(10);
+    const vid = nanoid();
 
-    const primaryUser = await User.findById(user.primaryUser);
+    const primaryUser = await User.findById(user.linkedUser);
 
     const video = await Video.create({
         vid,
@@ -51,7 +53,7 @@ const videoUploadOnCloud = asyncHandler(async (req,res)=>{
         description,
         filePath : videofile.url,
         uploader : user.email,
-        approver : primaryUser.email,
+        approver : linkedUser.email,
         cloudinaryPublicID :videofile.public_id,
         tags,
     });
@@ -62,11 +64,12 @@ const videoUploadOnCloud = asyncHandler(async (req,res)=>{
     primaryUser.videoList.push(video._id);
 
     await user.save(); // saving it
+    await primaryUser.save();
 
     // Delete local file after successful upload
     // fs.unlinkSync(videoLocalPath);
     
-    const resData = { "Video DB Unicode" : video.unicode }
+    const resData = { "Video DB Unicode" : video?.vid || "Not Found"}
 
     return res
     .status(200)

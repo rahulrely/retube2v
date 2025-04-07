@@ -21,16 +21,14 @@ const userSchema = new Schema(
     refreshToken: { type: String, default: null },
     tempToken :{ type: String, default: null },
 
-
+    rawVideoList : [{ type: mongoose.Schema.Types.ObjectId, ref: "Raw", default: null }],
     videoList: [ { type: mongoose.Schema.Types.ObjectId, ref: "Video", default: null } ],
     // Primary User Fields
-    googleId: { type: String, default: null },
     youtubeChannelId: { type: String, default: null },
     googleRefreshToken : {type: String, default : null},
     inviteToken: { type: String, default: null },
 
-    // Secondary User Fields
-    primaryUser: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+    linkedUser: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
     
   },
   { timestamps: true }

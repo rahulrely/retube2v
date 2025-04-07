@@ -249,14 +249,14 @@ const primaryAndSecondaryLink = asyncHandler(async (req, res) => {
     }
 
     // Link users
-    secondaryUser.primaryUser = primaryUser._id;
+    secondaryUser.linkedUser = primaryUser._id;
+    primaryUser.linkedUser = secondaryUser._id;
+
     secondaryUser.inviteToken = undefined;
-    secondaryUser.googleId = undefined;
     secondaryUser.youtubeId = undefined;
     secondaryUser.tempToken = undefined;
 
     primaryUser.inviteToken = undefined;
-    primaryUser.primaryUser = undefined;
 
     // Save changes to DB
     await secondaryUser.save();

@@ -1,9 +1,6 @@
 import dotenv from "dotenv"
 import {app} from "./app.js"
-import express from "express";
 import connectDB from "./db/dbConfig.js";
-import http from 'http';
-import https from 'https';
 
 dotenv.config({
   path:'./.env'

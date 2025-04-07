@@ -4,7 +4,7 @@ import {APIResponse} from "../utils/APIResponse.js";
 import Video from "../models/video.model.js";
 import fs from "fs";
 import {uploadOnCloudinary} from "../utils/cloundinary.js"
-import { nanoid ,customAlphabet} from 'nanoid';
+import { customAlphabet} from 'nanoid';
 import User from "../models/user.model.js";
 
 const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890', 10)

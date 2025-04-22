@@ -53,7 +53,7 @@ const videoUploadOnCloud = asyncHandler(async (req,res)=>{
         description,
         filePath : videofile.url,
         uploader : user.email,
-        approver : linkedUser.email,
+        approver : primaryUser.email,
         cloudinaryPublicID :videofile.public_id,
         tags,
     });

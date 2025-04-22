@@ -28,7 +28,7 @@ router.route("/login").post(loginUser);
 router.route("/google").get(genGoogleURL);
 
 // Step 2: Handle Google OAuth Callback
-router.route("/google/callback").get(verifyJwt,googleLink);
+router.route("/google/callback").get(googleLink);
 
 ///Google ##End
 

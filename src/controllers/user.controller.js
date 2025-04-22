@@ -142,13 +142,12 @@ const verifyUser = asyncHandler(async (req, res) => {
 
 const googleLink = asyncHandler(async (req, res) => {
 
-    const accEmail = req?.user?.email; // Email from auth middleware (access token)
+    const {email} = jwt.verify(req.cookies.tempToken,process.env.TEMP_TOKEN_SECRET)
+    // const accEmail = req // Email from auth middleware (access token)
 
-    if (!accEmail) {
-        throw new APIError(404, "No Access Token");
-    }
-
-    const email = accEmail;   
+    if (!email) {
+        throw new APIError(404, "No temp Token");
+    }  
 
     console.log("Session State:", req.session.state); // Check if session state exists
     console.log("Received State:", req.query.state); // Check if state matches

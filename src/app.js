@@ -10,7 +10,7 @@ app.use(cors({
 }));
 
 app.get('/api/v1/hello', (req, res) => { //verification for beckend and frontend connections
-    res.json({ message: 'Retube\'s Express Backend is Connected with You' });
+    res.json({ message: 'Retube\'s Express Backend is Connected with You !' });
   });
 
 app.use(express.json({

@@ -28,6 +28,28 @@ const generateAccessAndRefreshTokens = async(userId) =>{
 const genVerificationCode = () => {
     return crypto.randomInt(100000, 999999).toString();
 };
+const checkEmailAvailability = asyncHandler(async(req,res)=>{
+    const encodedEmail = req.query.email;
+
+    if(!encodedEmail){
+        throw new APIError(404,"Email is Required to check")
+    }
+    const decodedEmail = decodeURIComponent(encodedEmail);
+
+    const foundUser = await User.findOne({ email : decodedEmail });
+
+    if(foundUser){
+        return res
+        .status(200)
+        .json(
+            new APIResponse(200,"This Email ID is Already Registered with Us"))
+    }else{
+        return res
+        .status(200)
+        .json(
+            new APIResponse(200,"Email ID is Available for Registration"))
+    }
+});
 
 const registerUser = asyncHandler(async (req, res) => {
     const { name, email, password, role } = req.body;
@@ -202,7 +224,7 @@ const googleLink = asyncHandler(async (req, res) => {
         .cookie("googleAccessToken",googleAccessToken,options)
         .cookie("googleRefreshToken",googleRefreshToken,options)
         .json(
-            "Google Linked with Primary User"
+            new APIResponse(200,"Google Linked with Primary User")
         )
         .end("Google Linked with Primary User")
     }
@@ -405,6 +427,7 @@ const logoutUser =asyncHandler(async(req,res) =>{
 });
 
 export {
+    checkEmailAvailability,
     registerUser,
     verifyUser,
     googleLink,

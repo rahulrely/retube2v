@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { 
+import {
+    checkEmailAvailability,
     loginUser, 
     logoutUser, 
     verifyUser,
@@ -12,6 +13,8 @@ import { verifyJwt } from "../middlewares/auth.js";
 import { genGoogleURL } from "../google/auth.js";
 
 const router = Router();
+
+router.route("/emailavailability").get(checkEmailAvailability);
 
 router.route("/register").post(registerUser);
 

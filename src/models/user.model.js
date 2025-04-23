@@ -26,7 +26,7 @@ const userSchema = new Schema(
     // Primary User Fields
     youtubeChannelId: { type: String, default: null },
     googleRefreshToken : {type: String, default : null},
-    inviteToken: { type: String, default: null },
+    inviteCode: { type: String, default: null },
 
     linkedUser: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
     

@@ -8,6 +8,16 @@ import url from 'url';
 import { oauth2Client } from "../google/auth.js";
 import { sendVerificationEmail } from "../utils/VerifyEmail.Resend.js";
 
+function generateInviteToken(length = 20){
+    const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+    let token = '';
+    const bytes = crypto.randomBytes(length);
+    for (let i = 0; i < length; i++) {
+      token += charset[bytes[i] % charset.length];
+    }
+    return token;
+}
+
 const generateAccessAndRefreshTokens = async(userId) =>{
     try {
         const user = await User.findById(userId);
@@ -66,11 +76,7 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     // Generate invite token & verification code
-    const inviteToken = jwt.sign(
-        { name , role }, // generating using name and role
-        process.env.INVITE_TOKEN_SECRET,
-        { expiresIn: process.env.INVITE_TOKEN_EXPIRY }
-    );
+    const inviteCode = generateInviteToken();
     const verifyCode = genVerificationCode();
     const verifyCodeExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour expiry
 
@@ -89,7 +95,7 @@ const registerUser = asyncHandler(async (req, res) => {
         verifyCode,
         tempToken,
         verifyCodeExpiry,
-        ...(role === "primary" && { inviteToken }) // Only add inviteToken for "primary" users
+        ...(role === "primary" && { inviteCode }) // Only add inviteCode for "primary" users
     });
 
     console.log(user);
@@ -104,7 +110,7 @@ const registerUser = asyncHandler(async (req, res) => {
     // }
 
     // Fetch created user without sensitive data
-    const createdUser = await User.findById(user._id).select("-password -refreshToken -inviteToken");
+    const createdUser = await User.findById(user._id).select("-password -refreshToken -inviteCode");
     if (!createdUser) {
         throw new APIError(500, "Unable to retrieve user data after registration");
     }
@@ -153,9 +159,9 @@ const verifyUser = asyncHandler(async (req, res) => {
         
         // Save changes to database
         await user.save();
-
+        const userrole = user.role;
         return res.status(200).json(
-            new APIResponse(200,"User is successfully verified")
+            new APIResponse(200,{role : userrole},"User is successfully verified")
         );
     }
 
@@ -238,8 +244,14 @@ const primaryAndSecondaryLink = asyncHandler(async (req, res) => {
     const decodeToken = jwt.verify(tempToken,process.env.TEMP_TOKEN_SECRET)
     
     const secondaryEmail = decodeToken.email;
-    const { email, inviteToken } = req.body;
+    const { email, inviteCode } = req.body;
 
+    if(!email){
+        throw new APIError(404,"Email ID not recieved");
+    }
+    if(!inviteCode){
+        throw new APIError(404,"Email ID not recieved")
+    }
     // Fetch users from DB
     const primaryUser = await User.findOne({ email });
     const secondaryUser = await User.findOne({ email: secondaryEmail });
@@ -251,33 +263,21 @@ const primaryAndSecondaryLink = asyncHandler(async (req, res) => {
         throw new APIError(404, "Secondary user not found");
     }
 
-    // Verify JWT
-    let decoded;
-    try {
-        decoded = jwt.verify(inviteToken, process.env.INVITE_TOKEN_SECRET);
-        console.log("Decoded Token:", decoded);
-    } catch (error) {
-        if (error.name === "TokenExpiredError") {
-            throw new APIError(400, "Invite token has expired");
-        } else {
-            throw new APIError(400, "Invalid invite token");
-        }
-    }
 
     // Validate the token's content
-    if (primaryUser.name !== decoded.name || primaryUser.role !== decoded.role) {
-        throw new APIError(400, "Invalid invite token data");
+    if (primaryUser.inviteCode !== inviteCode) {
+        throw new APIError(400, "Invalid invite code");
     }
 
     // Link users
     secondaryUser.linkedUser = primaryUser._id;
     primaryUser.linkedUser = secondaryUser._id;
 
-    secondaryUser.inviteToken = undefined;
+    secondaryUser.inviteCode = undefined;
     secondaryUser.youtubeId = undefined;
     secondaryUser.tempToken = undefined;
 
-    primaryUser.inviteToken = undefined;
+    primaryUser.inviteCode = undefined;
 
     // Save changes to DB
     await secondaryUser.save();
@@ -319,7 +319,7 @@ const loginUser = asyncHandler(async (req,res) =>{
 
     //if db call is expensive then dont do below call and update previous user #04
 
-    const loggedInUser = await User.findById(user._id).select("-password -refreshToken -inviteToken") //#04
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken -inviteCode") //#04
 
     const options = {
         httpOnly : true,

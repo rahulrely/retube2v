@@ -115,13 +115,13 @@ const registerUser = asyncHandler(async (req, res) => {
     console.log(user);
 
     // Send verification email after user is created
-    try {
-        await sendVerificationEmail(email, name, verifyCode);
-        console.log(`Verification email sent to ${email}`);
-    } catch (err) {
-        console.error(`Email sending failed: ${err.message}`);
-        throw new APIError(500, "User registered but failed to send verification email");
-    }
+    // try {
+    //     await sendVerificationEmail(email, name, verifyCode);
+    //     console.log(`Verification email sent to ${email}`);
+    // } catch (err) {
+    //     console.error(`Email sending failed: ${err.message}`);
+    //     throw new APIError(500, "User registered but failed to send verification email");
+    // }
 
     // Fetch created user without sensitive data
     const createdUser = await User.findById(user._id).select("-password -refreshToken -inviteCode");
@@ -239,13 +239,14 @@ const googleLink = asyncHandler(async (req, res) => {
         await user.save(); // saving to db
         
         // Send Invitation for Secondary User email after to user for invite code
-        try {
-            await sendInviteCodeEmail(email, name, inviteCode);
-            console.log(`Invite Code email sent to ${email}`);
-        } catch (err) {
-            console.error(`Email sending failed: ${err.message}`);
-            throw new APIError(500, "User Google linked but failed to send inviteCode email");
-        }
+        // try {
+        //     await sendInviteCodeEmail(email, name, inviteCode);
+        //     console.log(`Invite Code email sent to ${email}`);
+        // } catch (err) {
+        //     console.error(`Email sending failed: ${err.message}`);
+        //     throw new APIError(500, "User Google linked but failed to send inviteCode email");
+        // }
+
         const options = {
             httpOnly : true,
             secure : true
@@ -326,22 +327,23 @@ const primaryAndSecondaryLink = asyncHandler(async (req, res) => {
     }
 
     // Send Success for Primary User email 
-        try {
-            await sendPrimarySuccessEmail(primaryUserEmail, primaryUserName);
-            console.log(`Sent Success for Primary User email ${primaryUserEmail}`);
-        } catch (err) {
-            console.error(`Email sending failed: ${err.message}`);
-            throw new APIError(500, "Users linked but failed to Success for Primary User email");
-        }
+        // try {
+        //     await sendPrimarySuccessEmail(primaryUserEmail, primaryUserName);
+        //     console.log(`Sent Success for Primary User email ${primaryUserEmail}`);
+        // } catch (err) {
+        //     console.error(`Email sending failed: ${err.message}`);
+        //     throw new APIError(500, "Users linked but failed to Success for Primary User email");
+        // }
 
     // Send Success for Secondary User email 
-        try {
-            await sendSecondarySuccessEmail(secondaryUserEmail,secondaryUserName,primaryUserName);
-            console.log(`Sent Success for Secondary User email ${secondaryUserEmail}`);
-        } catch (err) {
-            console.error(`Email sending failed: ${err.message}`);
-            throw new APIError(500, "Users linked but failed to send Success for Secondary User email");
-        }
+        // try {
+        //     await sendSecondarySuccessEmail(secondaryUserEmail,secondaryUserName,primaryUserName);
+        //     console.log(`Sent Success for Secondary User email ${secondaryUserEmail}`);
+        // } catch (err) {
+        //     console.error(`Email sending failed: ${err.message}`);
+        //     throw new APIError(500, "Users linked but failed to send Success for Secondary User email");
+        // }
+
     return res
     .status(200)
     .clearCookie('tempToken',options)
@@ -415,13 +417,13 @@ const passwordReset = asyncHandler(async (req, res) => {
     await user.save({ validateBeforeSave: false }); // Save code in DB
 
     // Sending verification email
-    try {
-        await sendVerificationEmail(email, name, verifyCodeGen);
-        console.log(`Verification email sent to ${email}`);
-    } catch (err) {
-        console.error(`Email sending failed: ${err.message}`);
-        throw new APIError(500, "Password Reset failed email");
-    }
+    // try {
+    //     await sendVerificationEmail(email, name, verifyCodeGen);
+    //     console.log(`Verification email sent to ${email}`);
+    // } catch (err) {
+    //     console.error(`Email sending failed: ${err.message}`);
+    //     throw new APIError(500, "Password Reset failed email");
+    // }
 
     // Get user input from body
     const { newPassword, verifyCode } = req.body;

@@ -86,8 +86,10 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new APIError(409, "User already exists");
     }
 
-    // Generate invite token & verification code
+    // Generate invite code & verification code
     const inviteCode = generateInviteToken();
+    const inviteCodeExpiry = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000); //10 days
+
     const verifyCode = genVerificationCode();
     const verifyCodeExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour expiry
 
@@ -106,7 +108,8 @@ const registerUser = asyncHandler(async (req, res) => {
         verifyCode,
         tempToken,
         verifyCodeExpiry,
-        ...(role === "primary" && { inviteCode }) // Only add inviteCode for "primary" users
+        ...(role === "primary" && { inviteCode }),// Only add inviteCode for "primary" users
+        ...(role === "primary" && { inviteCodeExpiry }) // 
     });
 
     console.log(user);
@@ -284,7 +287,12 @@ const primaryAndSecondaryLink = asyncHandler(async (req, res) => {
     if (!secondaryUser) {
         throw new APIError(404, "Secondary user not found");
     }
-
+    
+    // Check if verification code is expired
+    const isCodeValid = primaryUser.inviteCodeExpiry > Date.now();
+    if (!isCodeValid) {
+        throw new APIError(400, `Invitatication code validity expired ${Date.now()}`);
+    }
 
     // Validate the token's content
     if (primaryUser.inviteCode !== inviteCode) {
@@ -300,6 +308,7 @@ const primaryAndSecondaryLink = asyncHandler(async (req, res) => {
     secondaryUser.tempToken = undefined;
 
     primaryUser.inviteCode = undefined;
+    primaryUser.inviteCodeExpiry = undefined;
 
     //email details
     const primaryUserName = primaryUser.name;

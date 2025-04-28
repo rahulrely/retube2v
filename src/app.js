@@ -33,10 +33,9 @@ import videoRouter from "./routes/video.route.js"
 import rawVideosRouter from "./routes/raw.video.route.js";
 // import dashboardRouter from "./routes/dashboard.route.js"
 //routes declarations
-app.use("/api/v1/users",userRouter);
-app.use("/api/v1/videos",videoRouter);
-app.use("/api/v1/raw",rawVideosRouter);
+app.use("/api/v1/users",userRouter);      // rahul.com/api/v1/users/register
+app.use("/api/v1/videos",videoRouter);    // rahul.com/api/v1/videos
+app.use("/api/v1/raw",rawVideosRouter);   // rahul.com/api/v1/raw/cloud/upload
 // app.use("/api/v1/dashboard",dashboardRouter);
 export {app} ;
 
-// rahul.com/api/v1/users/register

@@ -5,6 +5,8 @@ const rawVideoSchema = new Schema({
 
     vid :{type : String , required : true ,index : true , unique : true},
 
+    instructions : {type : String , default : null},
+
     uploader: { type : String, required : true }, // Secondary User Email
 
     downloader: { type : String, required : true  }, // Primary User Email

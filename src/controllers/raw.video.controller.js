@@ -2,7 +2,6 @@ import  {asyncHandler} from "../utils/asynchandler.js";
 import {APIError} from "../utils/APIError.js";
 import {APIResponse} from "../utils/APIResponse.js";
 import Video from "../models/video.model.js";
-import fs from "fs";
 import {uploadOnCloudinary} from "../utils/cloundinary.js"
 import { customAlphabet} from 'nanoid';
 import User from "../models/user.model.js";
@@ -17,10 +16,13 @@ const uploadForDownload = asyncHandler(async(req,res) =>{
         throw new APIError(404,"Invaild User Not Found")
     }
     const foldername = user.email.split("@")[0]; //foldername based on username of secondary user 
-    let { title } = req.body
+    let { title , instructions} = req.body
 
     if (!title || title.trim() === "") {
         title = `Video uploaded by ${foldername}`;
+    }
+    if(!instructions){
+        instructions = "No Instructions";
     }
 
     const videoLocalPath = req.file?.path; // incoming from multer middleware
@@ -41,6 +43,7 @@ const uploadForDownload = asyncHandler(async(req,res) =>{
     const video = await Video.create({
         vid,
         title,
+        instructions,
         filePath : rawVideoFile.url,
         uploader : user.email,
         downloader : secondaryUser.email,

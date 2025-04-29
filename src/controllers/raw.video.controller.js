@@ -1,10 +1,10 @@
 import  {asyncHandler} from "../utils/asynchandler.js";
 import {APIError} from "../utils/APIError.js";
 import {APIResponse} from "../utils/APIResponse.js";
-import Video from "../models/video.model.js";
 import {uploadOnCloudinary} from "../utils/cloundinary.js"
 import { customAlphabet} from 'nanoid';
 import User from "../models/user.model.js";
+import Raw from "../models/raw.video.model.js";
 
 
 const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890', 10)
@@ -40,7 +40,7 @@ const uploadForDownload = asyncHandler(async(req,res) =>{
 
     const secondaryUser = await User.findById(user.linkedUser);
     
-    const video = await Video.create({
+    const video = await Raw.create({
         vid,
         title,
         instructions,

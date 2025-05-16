@@ -2,7 +2,6 @@ import  {asyncHandler} from "../utils/asynchandler.js";
 import {APIError} from "../utils/APIError.js";
 import {APIResponse} from "../utils/APIResponse.js";
 import Video from "../models/video.model.js";
-import fs from "fs";
 import {uploadOnCloudinary} from "../utils/cloundinary.js"
 import { customAlphabet} from 'nanoid';
 import User from "../models/user.model.js";
@@ -84,6 +83,48 @@ const getVideoList = asyncHandler(async (req, res) => {
     if (!user) {
         throw new APIError(404, "User not found.");
     }
+
+    const videoList = user?.videoList;
+
+    if(videoList == null){
+        return res
+        .status(200)
+        .json(new APIResponse(
+            200,
+            {
+                videos : { }
+            },
+            "No Videos Found."
+        ))
+    }
+
+    const videos = await Promise.all(
+        videoList.map(videoId => Video.findById(videoId))
+    );
+
+    const newVideoList = {};
+
+    for (let i = 0 ;i < videoList.length ; i++){
+        newVideoList[videos[i].vid] = videos[i].filePath;
+    }
+
+    
+    // videos.forEach(video => {
+    //     if (video) {
+    //         newVideoList[video.vid] = video.filePath;
+    //     }
+    // });
+
+
+    return res
+        .status(200)
+        .json(new APIResponse(
+            200,
+            {
+                videos : newVideoList
+            },
+            "Video Successfully fetched."
+        ))
 
 });
 

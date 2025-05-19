@@ -17,7 +17,7 @@ const rawVideoSchema = new Schema({
 
     cloudinaryPublicID: {type : String , required : true} ,
 
-    status: { type : String, enum: ["waiting", "downloaded"], default : "waiting" }
+    status: { type : String, enum: ["sent", "downloaded"], default : "sent" }
 },
     {
         timestamps : true

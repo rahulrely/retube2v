@@ -53,6 +53,9 @@ const uploadForDownload = asyncHandler(async(req,res) =>{
     user.rawVideoList.push(video._id);
     secondaryUser.rawVideoList.push(video._id);
 
+    await user.save(); 
+    await secondaryUser.save(); 
+
     console.log(video)
 
     const resData = { "Video DB Unicode" : video?.vid || "Not Found"}
@@ -65,11 +68,73 @@ const uploadForDownload = asyncHandler(async(req,res) =>{
 });
 
 const deleteVideoForDownload = asyncHandler(async(req,res) => {
+    
+});
 
+const getRawVideoList = asyncHandler(async (req, res) => {
+    const user = req?.user;
+
+    if (!user) {
+        throw new APIError(404, "User not found.");
+    }
+
+    const rawVideoList = user?.rawVideoList;
+
+    if (!rawVideoList || rawVideoList.length === 0) {
+        return res.status(200).json(new APIResponse(
+            200,
+            { rawVideos: [] },
+            "No Raw Videos Found."
+        ));
+    }
+
+    const rawVideos = await Promise.all(
+        rawVideoList.map(videoId => Raw.findById(videoId))
+    );
+
+    const newRawVideoList = rawVideos
+      .filter(v => v)
+      .map(video => ({
+        vid: video.vid,
+        title: video.title,
+        status: video.status,
+        filePath: video.filePath,
+        cloudinaryPublicID: video.cloudinaryPublicID,
+      }));
+
+    return res.status(200).json(new APIResponse(
+        200,
+        { rawVideos: newRawVideoList },
+        "Raw Video Successfully fetched."
+    ));
+});
+
+const getRawVideoPrimary = asyncHandler(async(req,res)=>{
+    const { vid } = req.params;
+
+    const rawvideo = await Raw.findOne({ vid });
+
+    if(!rawvideo){
+        throw new APIError(404,"Video Not Found.");
+    }
+    
+    return res
+        .status(200)
+        .json(new APIResponse(
+            200,
+            {   "vid" : rawvideo?.vid,
+                "url" : rawvideo?.filePath,
+                "cloudinaryPublicID" : rawvideo?.cloudinaryPublicID
+            },
+            "Video Successfully fetched."
+    ));
+    
 });
 
 
 export {
     uploadForDownload,
-    deleteVideoForDownload
+    deleteVideoForDownload,
+    getRawVideoList,
+    getRawVideoPrimary
 }

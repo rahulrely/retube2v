@@ -1,7 +1,9 @@
 import { Router } from "express";
 import { 
     uploadForDownload,
-    deleteVideoForDownload
+    deleteVideoForDownload,
+    getRawVideoList,
+    getRawVideoPrimary
 } from "../controllers/raw.video.controller.js";
 import { verifyJwt } from "../middlewares/auth.js";
 import { primaryCheck , secondaryCheck } from "../middlewares/checkRole.js"
@@ -16,6 +18,14 @@ router.route("/cloud/upload")
         primaryCheck,
         upload.single("rawVideoFile")
         ,uploadForDownload
+    ); // Primary User Upload on Cloud #Cloundinary
+
+
+router.route("/video/list")
+    .get(
+        verifyJwt,
+        primaryCheck,
+        getRawVideoList,
     ); // Primary User Upload on Cloud #Cloundinary
 
 

@@ -7,7 +7,8 @@ import {
     googleLink,
     primaryAndSecondaryLink,
     passwordReset, 
-    registerUser 
+    registerUser,
+    rolecheck
 } from "../controllers/user.controller.js";
 import { verifyJwt } from "../middlewares/auth.js";
 import { genGoogleURL } from "../google/auth.js";
@@ -36,6 +37,8 @@ router.route("/google/callback").get(googleLink);
 ///Google ##End
 
 //Secured routes
+
+router.route("/rolecheck").get(verifyJwt,rolecheck);
 
 router.route("/profile/passwordreset").post(verifyJwt,passwordReset) //password change
 

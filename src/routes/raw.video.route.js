@@ -24,9 +24,8 @@ router.route("/cloud/upload")
 router.route("/video/list")
     .get(
         verifyJwt,
-        primaryCheck,
         getRawVideoList,
-    ); // Primary User Upload on Cloud #Cloundinary
+    ); // Get The List of Raw Videos Uploaded On Cloud #Cloundinary. 
 
 
 

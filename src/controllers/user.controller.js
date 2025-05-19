@@ -482,6 +482,29 @@ const logoutUser =asyncHandler(async(req,res) =>{
     
 });
 
+const rolecheck = asyncHandler(async(req,res)=>{
+    const user = req?.user; // user from auth middleware
+
+    if (!user) {
+        throw new APIError(401, "Unauthorized: User not found");
+    }
+
+    if (user.role === "primary" || user.role === "secondary") {
+        return res
+        .state(200)
+        .json(
+            new APIResponse(200,{role : user.role},"Role Check Successfull")
+        )
+    }
+
+    return res
+    .status(405)
+    .json(
+        new APIResponse(405,{},"Unauthorized | Invalid Account | Supicious Account")
+    )
+
+});
+
 export {
     checkEmailAvailability,
     registerUser,
@@ -490,5 +513,6 @@ export {
     primaryAndSecondaryLink,
     loginUser,
     passwordReset,
-    logoutUser
+    logoutUser,
+    rolecheck
 };

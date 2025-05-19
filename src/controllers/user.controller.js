@@ -258,7 +258,7 @@ const googleLink = asyncHandler(async (req, res) => {
         .json(
             new APIResponse(200,"Google Linked with Primary User")
         )
-        .end("Google Linked with Primary User")
+        .redirect("http://localhost:3000/dashboard");
     }
 });
 
@@ -491,7 +491,7 @@ const rolecheck = asyncHandler(async(req,res)=>{
 
     if (user.role === "primary" || user.role === "secondary") {
         return res
-        .state(200)
+        .status(200)
         .json(
             new APIResponse(200,{role : user.role},"Role Check Successfull")
         )

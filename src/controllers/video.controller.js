@@ -102,19 +102,18 @@ const getVideoList = asyncHandler(async (req, res) => {
         videoList.map(videoId => Video.findById(videoId))
     );
 
-    const newVideoList = {};
-
-    for (let i = 0 ;i < videoList.length ; i++){
-        newVideoList[videos[i].vid] = videos[i].filePath;
-    }
-
-    
-    // videos.forEach(video => {
-    //     if (video) {
-    //         newVideoList[video.vid] = video.filePath;
-    //     }
-    // });
-
+    const newVideoList = videos
+      .filter(v => v)
+      .map(video => ({
+        vid: video.vid,
+        title: video.title,
+        description: video.description,
+        status: video.status,
+        filePath: video.filePath,
+        cloudinaryPublicID: video.cloudinaryPublicID,
+        isUploadedOnYoutube : video.isUploadedOnYoutube,
+        youtubeVideoId : video.youtubeVideoId
+      }));
 
     return res
         .status(200)

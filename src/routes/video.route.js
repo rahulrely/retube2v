@@ -20,7 +20,7 @@ router.route("/cloud/upload")
         ,videoUploadOnCloud
     ); // Secondary User Upload on Cloud #Cloundinary
 
-router.route("/videoslist")
+router.route("/video/list")
     .get(
         verifyJwt,
         getVideoList

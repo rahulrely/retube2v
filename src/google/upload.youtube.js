@@ -96,8 +96,7 @@ const uploadOnYT = async (req, res) => {
 
         video.youtubeVideoId = uploadResponse.data.id;
         video.filePath = undefined;
-        video.isUploadedOnYoutube = true;
-        video.status = "approved";
+        video.status = "Approved";
         video.approvedAt = Date.now();
         if (video.cloudinaryPublicId) { 
             try {

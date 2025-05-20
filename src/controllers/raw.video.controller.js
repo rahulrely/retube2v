@@ -109,7 +109,7 @@ const getRawVideoList = asyncHandler(async (req, res) => {
     ));
 });
 
-const getRawVideoPrimary = asyncHandler(async(req,res)=>{
+const getRawVideo = asyncHandler(async(req,res)=>{
     const { vid } = req.params;
 
     const rawvideo = await Raw.findOne({ vid });
@@ -124,7 +124,9 @@ const getRawVideoPrimary = asyncHandler(async(req,res)=>{
             200,
             {   "vid" : rawvideo?.vid,
                 "url" : rawvideo?.filePath,
-                "cloudinaryPublicID" : rawvideo?.cloudinaryPublicID
+                "title": rawvideo?.title,
+                "cloudinaryPublicID" : rawvideo?.cloudinaryPublicID,
+                "status": rawvideo?.status
             },
             "Video Successfully fetched."
     ));
@@ -136,5 +138,5 @@ export {
     uploadForDownload,
     deleteVideoForDownload,
     getRawVideoList,
-    getRawVideoPrimary
+    getRawVideo
 }

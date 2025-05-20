@@ -19,11 +19,9 @@ const videoSchema = new Schema({
 
     cloudinaryPublicID: {type : String , required : true} ,
 
-    isUploadedOnYoutube : { type : Boolean , default : false },
-
     youtubeVideoId: { type : String , default : null }, // YouTube Video ID after approval
 
-    status: { type : String, enum: ["pending", "approved", "rejected"], default : "pending" },
+    status: { type : String, enum: ["Pending", "Approved", "Rejected"], default : "Pending" },
 
     approvedAt: { type : Date , default : null} },
     {

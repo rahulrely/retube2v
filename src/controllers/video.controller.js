@@ -111,7 +111,6 @@ const getVideoList = asyncHandler(async (req, res) => {
         status: video.status,
         filePath: video.filePath,
         cloudinaryPublicID: video.cloudinaryPublicID,
-        isUploadedOnYoutube : video.isUploadedOnYoutube,
         youtubeVideoId : video.youtubeVideoId
       }));
 
@@ -143,6 +142,9 @@ const getVideo = asyncHandler(async(req,res)=>{
             200,
             {   "vid" : video?.vid,
                 "url" : video?.filePath,
+                "title": video?.title,
+                "description": video?.description,
+                "tags" :video?.tags,
                 "cloudinaryPublicID" : video?.cloudinaryPublicID
             },
             "Video Successfully fetched."

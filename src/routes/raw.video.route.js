@@ -3,7 +3,7 @@ import {
     uploadForDownload,
     deleteVideoForDownload,
     getRawVideoList,
-    getRawVideoPrimary
+    getRawVideo
 } from "../controllers/raw.video.controller.js";
 import { verifyJwt } from "../middlewares/auth.js";
 import { primaryCheck , secondaryCheck } from "../middlewares/checkRole.js"
@@ -20,6 +20,11 @@ router.route("/cloud/upload")
         ,uploadForDownload
     ); // Primary User Upload on Cloud #Cloundinary
 
+router.route("/:vid")
+    .get(
+        verifyJwt,
+        getRawVideo,
+    )
 
 router.route("/video/list")
     .get(

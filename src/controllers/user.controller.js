@@ -317,6 +317,8 @@ const primaryAndSecondaryLink = asyncHandler(async (req, res) => {
     const primaryUserEmail = primaryUser.email;
     const secondaryUserEmail = secondaryUser.email;
 
+    const {accessToken , refreshToken } = await generateAccessAndRefreshTokens(secondaryUser._id);
+
     // Save changes to DB
     await secondaryUser.save();
     await primaryUser.save();

@@ -7,7 +7,7 @@ import { asyncHandler } from "../utils/asynchandler.js";
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URL // e.g., "http://localhost:5000/auth/google/callback"
+  process.env.GOOGLE_REDIRECT_URL // e.g., "http://localhost:8000/auth/google/callback"
 );
 
 // Google OAuth2 scopes
@@ -24,6 +24,8 @@ const genGoogleURL = asyncHandler(async(req,res)=>{
       const authorizationUrl = oauth2Client.generateAuthUrl({
         // 'online' (default) or 'offline' (gets refresh_token)
         access_type: 'offline',
+
+        prompt: 'consent',
         /** Pass in the scopes array defined above.
           * Alternatively, if only one scope is needed, you can pass a scope URL as a string */
         scope: scopes,

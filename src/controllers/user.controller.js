@@ -236,6 +236,8 @@ const googleLink = asyncHandler(async (req, res) => {
         const inviteCode = user.inviteCode;
         const name = user.name;
 
+        const {accessToken , refreshToken } = await generateAccessAndRefreshTokens(user._id);
+
         await user.save(); // saving to db
         
         // Send Invitation for Secondary User email after to user for invite code
@@ -253,12 +255,10 @@ const googleLink = asyncHandler(async (req, res) => {
         }
         return res
         .status(200)
-        .cookie("googleAccessToken",googleAccessToken,options)
-        .cookie("googleRefreshToken",googleRefreshToken,options)
-        .json(
-            new APIResponse(200,"Google Linked with Primary User")
-        )
-        .redirect("http://localhost:3000/dashboard");
+        .clearCookie('tempToken',options)
+        .cookie("accessToken",accessToken,options)
+        .cookie("refreshToken",refreshToken,options)
+        .redirect(`${process.env.FRONTEND_SUCCESS_URL}?linked=true`);
     }
 });
 
@@ -347,9 +347,9 @@ const primaryAndSecondaryLink = asyncHandler(async (req, res) => {
     return res
     .status(200)
     .clearCookie('tempToken',options)
-    .json(
-        new APIResponse(200, "Secondary User is Linked to Primary User Successfully")
-    );
+    .cookie("accessToken",accessToken,options)
+    .cookie("refreshToken",refreshToken,options)
+    .redirect(`${process.env.FRONTEND_SUCCESS_URL}?linked=true`);
 });
 
 const loginUser = asyncHandler(async (req,res) =>{

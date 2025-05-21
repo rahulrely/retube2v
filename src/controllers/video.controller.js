@@ -152,8 +152,32 @@ const getVideo = asyncHandler(async(req,res)=>{
     
 });
 
+const rejectVideo = asyncHandler(async(req,res)=>{
+    const { vid } = req?.query;
+
+    const video = await Video.findOne({ vid });
+
+    if(!video){
+        return new APIError(404,"Video Not Found.");
+    }
+
+    video.status = "Rejected";
+
+    await video.save();
+
+    return res
+    .status(200)
+    .json(
+        new APIResponse(
+            200,
+            "Video Successfully Rejected."
+        )
+    )
+});
+
 export {
     videoUploadOnCloud,
     getVideo,
-    getVideoList
+    getVideoList,
+    rejectVideo
 }

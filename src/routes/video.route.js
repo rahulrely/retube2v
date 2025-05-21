@@ -2,7 +2,8 @@ import { Router } from "express";
 import { 
     videoUploadOnCloud,
     getVideo,
-    getVideoList
+    getVideoList,
+    rejectVideo
 } from "../controllers/video.controller.js";
 import { verifyJwt } from "../middlewares/auth.js";
 import { primaryCheck , secondaryCheck } from "../middlewares/checkRole.js"
@@ -39,5 +40,12 @@ router.route("/youtube/approval")
         primaryCheck,
         uploadOnYT
     ); // Don't hit this route// ## very costly
+
+router.route("/youtube/reject")
+    .post(
+        verifyJwt,
+        primaryCheck,
+        rejectVideo
+    )
 
 export default router;

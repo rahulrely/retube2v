@@ -3,7 +3,8 @@ import {
     uploadForDownload,
     deleteVideoForDownload,
     getRawVideoList,
-    getRawVideo
+    getRawVideo,
+    downloadedRawVideo
 } from "../controllers/raw.video.controller.js";
 import { verifyJwt } from "../middlewares/auth.js";
 import { primaryCheck , secondaryCheck } from "../middlewares/checkRole.js"
@@ -30,8 +31,12 @@ router.route("/video/list")
     .get(
         verifyJwt,
         getRawVideoList,
-    ); // Get The List of Raw Videos Uploaded On Cloud #Cloundinary. 
+    ); // Get The List of Raw Videos Uploaded On Cloud #Cloundinary.
 
-
+router.route("/videodownloaded")
+    .post(
+        verifyJwt,
+        downloadedRawVideo
+    )
 
 export default router;

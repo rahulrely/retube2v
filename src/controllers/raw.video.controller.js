@@ -97,7 +97,7 @@ const getRawVideoList = asyncHandler(async (req, res) => {
       .map(video => ({
         vid: video.vid,
         title: video.title,
-        instruction : video.instruction,
+        instructions : video.instructions,
         status: video.status,
         filePath: video.filePath,
         cloudinaryPublicID: video.cloudinaryPublicID,
@@ -126,6 +126,7 @@ const getRawVideo = asyncHandler(async(req,res)=>{
             {   "vid" : rawvideo?.vid,
                 "url" : rawvideo?.filePath,
                 "title": rawvideo?.title,
+                "instructions": rawvideo?.instructions,
                 "cloudinaryPublicID" : rawvideo?.cloudinaryPublicID,
                 "status": rawvideo?.status
             },
@@ -134,10 +135,35 @@ const getRawVideo = asyncHandler(async(req,res)=>{
     
 });
 
+const downloadedRawVideo = asyncHandler(async(req,res)=>{
+    const { vid } = req?.query;
+
+    const video = await Raw.findOne({ vid });
+
+    if(!video){
+        return new APIError(404,"Video Not Found.");
+    };
+
+    video.status = "Downloaded";
+    video.filePath = undefined;
+
+    await video.save();
+
+    return res
+    .status(200)
+    .json(
+        new APIResponse(
+            200,
+            "Video Successfully Downloaded."
+        )
+    )
+})
+
 
 export {
     uploadForDownload,
     deleteVideoForDownload,
     getRawVideoList,
-    getRawVideo
+    getRawVideo,
+    downloadedRawVideo
 }

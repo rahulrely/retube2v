@@ -97,6 +97,7 @@ const getRawVideoList = asyncHandler(async (req, res) => {
       .map(video => ({
         vid: video.vid,
         title: video.title,
+        instruction : video.instruction,
         status: video.status,
         filePath: video.filePath,
         cloudinaryPublicID: video.cloudinaryPublicID,

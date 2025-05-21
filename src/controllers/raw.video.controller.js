@@ -124,7 +124,7 @@ const getRawVideo = asyncHandler(async(req,res)=>{
         .json(new APIResponse(
             200,
             {   "vid" : rawvideo?.vid,
-                "url" : rawvideo?.filePath,
+                "filePath" : rawvideo?.filePath,
                 "title": rawvideo?.title,
                 "instructions": rawvideo?.instructions,
                 "cloudinaryPublicID" : rawvideo?.cloudinaryPublicID,
@@ -145,7 +145,7 @@ const downloadedRawVideo = asyncHandler(async(req,res)=>{
     };
 
     video.status = "Downloaded";
-    video.filePath = undefined;
+    // video.filePath = undefined;
 
     await video.save();
 

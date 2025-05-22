@@ -8,7 +8,8 @@ import {
     primaryAndSecondaryLink,
     passwordReset, 
     registerUser,
-    rolecheck
+    rolecheck,
+    userDetails
 } from "../controllers/user.controller.js";
 import { verifyJwt } from "../middlewares/auth.js";
 import { genGoogleURL } from "../google/auth.js";
@@ -40,8 +41,22 @@ router.route("/google/callback").get(googleLink);
 
 router.route("/rolecheck").get(verifyJwt,rolecheck);
 
-router.route("/profile/passwordreset").post(verifyJwt,passwordReset) //password change
+router.route("/profile/passwordreset")
+    .post(
+        verifyJwt,
+        passwordReset
+    ); //password change
 
-router.route("/logout").post(verifyJwt, logoutUser);
+router.route("/logout")
+    .post(
+        verifyJwt,
+        logoutUser
+    );
+
+router.route("/details")
+    .get(
+        verifyJwt,
+        userDetails
+    );
 
 export default router;

@@ -18,7 +18,7 @@ export const verifyJwt = asyncHandler(async (req, res, next) => {
         throw new APIError(401, "Invalid or Expired Access Token");
     }
 
-    const user = await User.findById(decodedToken?._id).select("-password -refreshToken");
+    const user = await User.findById(decodedToken?._id).select("-password -refreshToken -googleRefreshToken");
 
     if (!user) {
         throw new APIError(401, "Invalid Access Token");

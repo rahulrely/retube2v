@@ -507,6 +507,33 @@ const rolecheck = asyncHandler(async(req,res)=>{
 
 });
 
+const userDetails =asyncHandler(async(req,res)=>{
+    const user = req?.user;
+
+    if(!user){
+        throw new APIError(403,"Invalid User or user Not found");
+    }
+
+    const linkedUser = await User.findById(user.linkedUser);
+
+    return res
+    .status(200)
+    .json(
+        new APIResponse(
+            200,
+            {
+                name : user.name,
+                email : user.email,
+                role : user.role,
+                isVerified : user.isVerified,
+                linkedUserName : linkedUser.name,
+                linkedUserEmail : linkedUser.email,
+            },
+            "User Details Succesfully Fetched"
+        )
+    )
+});
+
 export {
     checkEmailAvailability,
     registerUser,
@@ -516,5 +543,6 @@ export {
     loginUser,
     passwordReset,
     logoutUser,
-    rolecheck
+    rolecheck,
+    userDetails
 };

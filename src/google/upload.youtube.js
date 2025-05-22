@@ -32,10 +32,11 @@ const uploadOnYT = async (req, res) => {
             throw new APIError(403, "Forbidden: You are not allowed to upload this video.");
         }
         
-        let { title , description , tags } = req.body;
+        let { title , description , tags , categoryId } = req.body;
 
         title = title && title.trim() !== "" ? title : video.title;
         description = description && description.trim() !== "" ? description : video.description;
+        categoryId = categoryId && categoryId.trim() !== "" ? categoryId : "22"
         tags = Array.isArray(tags) ? tags : video.tags;
 
         
@@ -70,7 +71,7 @@ const uploadOnYT = async (req, res) => {
                 title : title,
                 description : description ,
                 tags: tags,
-                categoryId: '22', // Default: People & Blogs
+                categoryId: categoryId,
             },
             status: {
                 privacyStatus: 'private',

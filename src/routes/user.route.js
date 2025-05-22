@@ -9,7 +9,8 @@ import {
     passwordReset, 
     registerUser,
     rolecheck,
-    userDetails
+    userDetails,
+    editName
 } from "../controllers/user.controller.js";
 import { verifyJwt } from "../middlewares/auth.js";
 import { genGoogleURL } from "../google/auth.js";
@@ -58,5 +59,11 @@ router.route("/details")
         verifyJwt,
         userDetails
     );
+
+router.route("/editprofile")
+    .patch(
+        verifyJwt,
+        editName
+    )
 
 export default router;

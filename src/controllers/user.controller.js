@@ -108,8 +108,8 @@ const registerUser = asyncHandler(async (req, res) => {
         verifyCode,
         tempToken,
         verifyCodeExpiry,
-        ...(role === "primary" && { inviteCode }),// Only add inviteCode for "primary" users
-        ...(role === "primary" && { inviteCodeExpiry }) // 
+        ...(role === "Primary" && { inviteCode }),// Only add inviteCode for "primary" users
+        ...(role === "Primary" && { inviteCodeExpiry }) // 
     });
 
     console.log(user);
@@ -491,7 +491,7 @@ const rolecheck = asyncHandler(async(req,res)=>{
         throw new APIError(401, "Unauthorized: User not found");
     }
 
-    if (user.role === "primary" || user.role === "secondary") {
+    if (user.role === "Primary" || user.role === "Secondary") {
         return res
         .status(200)
         .json(
@@ -534,6 +534,34 @@ const userDetails =asyncHandler(async(req,res)=>{
     )
 });
 
+const editName = asyncHandler(async(req,res)=>{
+    const user = req?.user;
+
+    if(!user){
+        throw new APIError(403,"Invalid User or User Not Found");
+    };
+
+    let { name } = req?.body;
+    
+    if(!name){
+        throw new APIError(404,"Name must be sent");
+    };
+
+    user.name = name;
+
+    await user.save();
+
+    return res
+    .status(200)
+    .json(
+        new APIResponse(
+            200,
+            "User's Name Successfully Modified."
+        )
+    )
+
+})
+
 export {
     checkEmailAvailability,
     registerUser,
@@ -544,5 +572,6 @@ export {
     passwordReset,
     logoutUser,
     rolecheck,
-    userDetails
+    userDetails,
+    editName
 };

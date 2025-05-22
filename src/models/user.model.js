@@ -10,7 +10,7 @@ const userSchema = new Schema(
       match:/[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/g
      },
     password: { type: String, required: true },
-    role: { type: String, enum: ["primary", "secondary"], required: true },
+    role: { type: String, enum: ["Primary", "Secondary"], required: true },
 
     
     isVerified: { type: Boolean, default: false },

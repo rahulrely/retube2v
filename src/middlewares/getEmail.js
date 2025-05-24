@@ -21,5 +21,3 @@ export const getEmail = asyncHandler(async (req, res, next) => {
     req.email = decodedEmail;
     next();
 });
-
-//no needed

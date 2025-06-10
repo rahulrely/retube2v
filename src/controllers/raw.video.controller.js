@@ -33,6 +33,8 @@ const uploadForDownload = asyncHandler(async(req,res) =>{
     
     const rawVideoFile = await uploadOnCloudinary(videoLocalPath,foldername); //Upload to Cloundinary
 
+    console.log(rawVideoFile.bytes)
+
     if (!rawVideoFile) {
         throw new APIError(500,"Upload on Cloundinary Failed");
     }

@@ -114,6 +114,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     console.log(user);
 
+    //Email is Not Enabled due to Domain Purchased Required
     // Send verification email after user is created
     // try {
     //     await sendVerificationEmail(email, name, verifyCode);
@@ -122,7 +123,6 @@ const registerUser = asyncHandler(async (req, res) => {
     //     console.error(`Email sending failed: ${err.message}`);
     //     throw new APIError(500, "User registered but failed to send verification email");
     // }
-
     // Fetch created user without sensitive data
     const createdUser = await User.findById(user._id).select("-password -refreshToken -inviteCode");
     if (!createdUser) {
@@ -180,6 +180,32 @@ const verifyUser = asyncHandler(async (req, res) => {
     }
 
     throw new APIError(400, "Invalid verification code");
+});
+
+const verifyUserNOT = asyncHandler(async (req, res) => {
+    const tempToken = req.cookies?.tempToken;
+    
+    if(!tempToken){
+        throw new APIError(404,"No temp Cookies");
+    }
+    const decodeToken = jwt.verify(tempToken,process.env.TEMP_TOKEN_SECRET)    
+
+    const email = decodeToken.email;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        throw new APIError(404, "User doesn't exist");
+    }
+    
+    user.isVerified = true;
+    
+    // Save changes to database
+    await user.save();
+    const userrole = user.role;
+    return res.status(200).json(
+        new APIResponse(200,{role : userrole},"User is successfully verified")
+    );
 });
 
 const googleLink = asyncHandler(async (req, res) => {
@@ -573,5 +599,6 @@ export {
     logoutUser,
     rolecheck,
     userDetails,
-    editName
+    editName,
+    verifyUserNOT
 };

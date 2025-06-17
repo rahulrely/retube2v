@@ -288,6 +288,29 @@ const googleLink = asyncHandler(async (req, res) => {
     }
 });
 
+const inviteCodefun = asyncHandler(async(req, res) =>{
+    const {xemail} = jwt.verify(req.cookies.tempToken,process.env.TEMP_TOKEN_SECRET)
+
+    const user = await User.findOne({ xemail });
+
+    const email = user?.email ;
+    const name = user?.name ;
+    const inviteCode = user?.inviteCode;
+
+    const htmlInvite = generateInviteCodeEmailHTML(email, name, inviteCode)
+    return res
+    .status(200)
+    .json(
+        new APIResponse(
+            200,
+            {
+                html : htmlInvite
+            },
+            "Your account Succesfully created. Now share with your secondary"
+        )
+    )
+});
+
 const primaryAndSecondaryLink = asyncHandler(async (req, res) => {
     const tempToken = req.cookies?.tempToken;
     if(!tempToken){
@@ -600,5 +623,6 @@ export {
     rolecheck,
     userDetails,
     editName,
-    verifyUserNOT
+    verifyUserNOT,
+    inviteCodefun
 };

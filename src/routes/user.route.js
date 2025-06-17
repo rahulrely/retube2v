@@ -11,7 +11,8 @@ import {
     rolecheck,
     userDetails,
     editName,
-    verifyUserNOT
+    verifyUserNOT,
+    inviteCodefun
 } from "../controllers/user.controller.js";
 import { verifyJwt } from "../middlewares/auth.js";
 import { genGoogleURL } from "../google/auth.js";
@@ -42,6 +43,8 @@ router.route("/google/callback").get(googleLink);
 ///Google ##End
 
 //Secured routes
+
+router.route("/invite").get(inviteCodefun); //invitetoken
 
 router.route("/rolecheck").get(verifyJwt,rolecheck);
 

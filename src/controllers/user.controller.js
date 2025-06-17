@@ -13,6 +13,10 @@ import {
     sendSecondarySuccessEmail
  } from "../utils/email.resend.js";
 
+ import {
+  generateInviteCodeEmailHTML
+ } from "../email/mailTemplet.js";
+
 function generateInviteToken(length = 20){
     const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
     let token = '';
@@ -281,7 +285,6 @@ const googleLink = asyncHandler(async (req, res) => {
         }
         return res
         .status(200)
-        .clearCookie('tempToken',options)
         .cookie("accessToken",accessToken,options)
         .cookie("refreshToken",refreshToken,options)
         .redirect(`${process.env.FRONTEND_SUCCESS_URL}?linked=true`);
@@ -296,10 +299,15 @@ const inviteCodefun = asyncHandler(async(req, res) =>{
     const email = user?.email ;
     const name = user?.name ;
     const inviteCode = user?.inviteCode;
+    const options = {
+        httpOnly : true,
+        secure : true,
+    }
 
-    const htmlInvite = generateInviteCodeEmailHTML(email, name, inviteCode)
+    const htmlInvite = generateInviteCodeEmailHTML(name,email, inviteCode)
     return res
     .status(200)
+    .clearCookie('tempToken',options)
     .json(
         new APIResponse(
             200,

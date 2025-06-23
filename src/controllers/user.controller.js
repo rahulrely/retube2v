@@ -214,80 +214,84 @@ const verifyUserNOT = asyncHandler(async (req, res) => {
 
 const googleLink = asyncHandler(async (req, res) => {
 
-    const {email} = jwt.verify(req.cookies.tempToken,process.env.TEMP_TOKEN_SECRET)
-    // const accEmail = req // Email from auth middleware (access token)
-
-    if (!email) {
-        throw new APIError(404, "No temp Token");
-    }  
-
-    console.log("Session State:", req.session.state); // Check if session state exists
-    console.log("Received State:", req.query.state); // Check if state matches
-
-    //GOOGLE #START
-    // Handle the OAuth 2.0 server response
-    let q = url.parse(req.url, true).query;
-
-    console.log("url rahu:",q) ///remove ##
-
-    if (q.error) { // An error response e.g. error=access_denied
-        console.log('Error:' + q.error);
-    } else if (q.state !== req.session.state) { //check state value
-        console.log('State mismatch. Possible CSRF attack');
-        res.end('State mismatch. Possible CSRF attack');
-    } else { // Get access and refresh tokens (if access_type is offline)
-        let { tokens } = await oauth2Client.getToken(q.code);
-        oauth2Client.setCredentials(tokens);
-
-        /** Save credential to the global variable in case access token was refreshed.
-        * ACTION ITEM: In a production app, you likely want to save the refresh token
-        *              in a secure persistent database instead. */
-        // userCredential = tokens; // test only
-        // User authorized the request. Now, check which scopes were granted.
-        console.log("googleToken rahul:",tokens);
-        const googleRefreshToken = tokens?.refresh_token;
-        const googleAccessToken = tokens?.access_token;
-        if(!googleRefreshToken){
-            throw new APIError(405,"Refresh Token Not Found in Google Response")
+    try {
+        const {email} = jwt.verify(req.cookies.tempToken,process.env.TEMP_TOKEN_SECRET)
+        // const accEmail = req // Email from auth middleware (access token)
+    
+        if (!email) {
+            throw new APIError(404, "No temp Token");
+        }  
+    
+        console.log("Session State:", req.session.state); // Check if session state exists
+        console.log("Received State:", req.query.state); // Check if state matches
+    
+        //GOOGLE #START
+        // Handle the OAuth 2.0 server response
+        let q = url.parse(req.url, true).query;
+    
+        console.log("url rahu:",q) ///remove ##
+    
+        if (q.error) { // An error response e.g. error=access_denied
+            console.log('Error:' + q.error);
+        } else if (q.state !== req.session.state) { //check state value
+            console.log('State mismatch. Possible CSRF attack');
+            res.end('State mismatch. Possible CSRF attack');
+        } else { // Get access and refresh tokens (if access_type is offline)
+            let { tokens } = await oauth2Client.getToken(q.code);
+            oauth2Client.setCredentials(tokens);
+    
+            /** Save credential to the global variable in case access token was refreshed.
+            * ACTION ITEM: In a production app, you likely want to save the refresh token
+            *              in a secure persistent database instead. */
+            // userCredential = tokens; // test only
+            // User authorized the request. Now, check which scopes were granted.
+            console.log("googleToken rahul:",tokens);
+            const googleRefreshToken = tokens?.refresh_token;
+            const googleAccessToken = tokens?.access_token;
+            if(!googleRefreshToken){
+                throw new APIError(405,"Refresh Token Not Found in Google Response")
+            }
+            if(!googleAccessToken){
+                throw new APIError(405,"Refresh Token Not Found in Google Response")
+            }
+            //check for scope
+            if (
+                !tokens.scope.includes('https://www.googleapis.com/auth/youtube') && 
+                !tokens.scope.includes('https://www.googleapis.com/auth/youtube.upload')
+            ) {
+                throw new APIError(404,"Failed: Required scopes are missing!");
+            }
+            const user = await User.findOne({ email });
+            user.googleRefreshToken = googleRefreshToken; //Saving Google Refresh Token in MongoDB
+    
+            const inviteCode = user.inviteCode;
+            const name = user.name;
+    
+            const {accessToken , refreshToken } = await generateAccessAndRefreshTokens(user._id);
+    
+            await user.save(); // saving to db
+            
+            // Send Invitation for Secondary User email after to user for invite code
+            // try {
+            //     await sendInviteCodeEmail(email, name, inviteCode);
+            //     console.log(`Invite Code email sent to ${email}`);
+            // } catch (err) {
+            //     console.error(`Email sending failed: ${err.message}`);
+            //     throw new APIError(500, "User Google linked but failed to send inviteCode email");
+            // }
+    
+            const options = {
+                httpOnly : true,
+                secure : true
+            }
+            return res
+            .status(200)
+            .cookie("accessToken",accessToken,options)
+            .cookie("refreshToken",refreshToken,options)
+            .redirect(`${process.env.FRONTEND_SUCCESS_URL}?linked=true`);
         }
-        if(!googleAccessToken){
-            throw new APIError(405,"Refresh Token Not Found in Google Response")
-        }
-        //check for scope
-        if (
-            !tokens.scope.includes('https://www.googleapis.com/auth/youtube') && 
-            !tokens.scope.includes('https://www.googleapis.com/auth/youtube.upload')
-        ) {
-            throw new APIError(404,"Failed: Required scopes are missing!");
-        }
-        const user = await User.findOne({ email });
-        user.googleRefreshToken = googleRefreshToken; //Saving Google Refresh Token in MongoDB
-
-        const inviteCode = user.inviteCode;
-        const name = user.name;
-
-        const {accessToken , refreshToken } = await generateAccessAndRefreshTokens(user._id);
-
-        await user.save(); // saving to db
-        
-        // Send Invitation for Secondary User email after to user for invite code
-        // try {
-        //     await sendInviteCodeEmail(email, name, inviteCode);
-        //     console.log(`Invite Code email sent to ${email}`);
-        // } catch (err) {
-        //     console.error(`Email sending failed: ${err.message}`);
-        //     throw new APIError(500, "User Google linked but failed to send inviteCode email");
-        // }
-
-        const options = {
-            httpOnly : true,
-            secure : true
-        }
-        return res
-        .status(200)
-        .cookie("accessToken",accessToken,options)
-        .cookie("refreshToken",refreshToken,options)
-        .redirect(`${process.env.FRONTEND_SUCCESS_URL}?linked=true`);
+    } catch (error) {
+        console.log("Error In Google Linking :",error)
     }
 });
 

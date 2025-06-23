@@ -136,6 +136,9 @@ const registerUser = asyncHandler(async (req, res) => {
     const options = {
         httpOnly : true,
         secure : true,
+        sameSite: "none", // critical for cross-origin cookies
+        maxAge: 1000 * 60 * 15, // optional: 15 min expiry
+        path: "/",
     }
 
     return res
@@ -412,7 +415,7 @@ const primaryAndSecondaryLink = asyncHandler(async (req, res) => {
     .clearCookie('tempToken',options)
     .cookie("accessToken",accessToken,options)
     .cookie("refreshToken",refreshToken,options)
-    .redirect(`${process.env.FRONTEND_SUCCESS_URL}?linked=true`);
+    .redirect(`${process.env.FRONTEND_SEC_SUCCESS_URL}?linked=true`);
 });
 
 const loginUser = asyncHandler(async (req,res) =>{

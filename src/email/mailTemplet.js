@@ -69,6 +69,7 @@ const generateInviteCodeEmailHTML = (name ,email,inviteCode) =>{
       </td>
     </tr>
   </table>
+  <span style="color:#f87171;">Invite code is visible just this once — please copy it now..</span>
 </body>
 </html>
 

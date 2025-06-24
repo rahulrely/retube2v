@@ -133,17 +133,22 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new APIError(500, "Unable to retrieve user data after registration");
     }
 
-    const options = {
+    const options1 = {
+        httpOnly : true,
+        secure : true,
+    };
+    const options2 = {
         httpOnly : true,
         secure : true,
         sameSite: "none", // critical for cross-origin cookies
         maxAge: 1000 * 60 * 15, // optional: 15 min expiry
-        path: "/",
+        domain : "retube2v.onrender.com" 
     }
 
     return res
     .status(201)
-    .cookie("tempToken",tempToken,options)
+    .cookie("tempToken",tempToken,options1)
+    .cookie("tempToken",tempToken,options2)
     .json(
         new APIResponse(200, createdUser, "User registered successfully. Verification email sent.")
     );

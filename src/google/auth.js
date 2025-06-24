@@ -13,7 +13,6 @@ const oauth2Client = new google.auth.OAuth2(
 // Google OAuth2 scopes
 const scopes = [
   "https://www.googleapis.com/auth/youtube.upload",
-  "https://www.googleapis.com/auth/youtube",
 ];
 
 const genGoogleURL = asyncHandler(async(req,res)=>{
@@ -25,7 +24,7 @@ const genGoogleURL = asyncHandler(async(req,res)=>{
         // 'online' (default) or 'offline' (gets refresh_token)
         access_type: 'offline',
 
-        prompt: 'consent',
+        // prompt: 'consent',
         /** Pass in the scopes array defined above.
           * Alternatively, if only one scope is needed, you can pass a scope URL as a string */
         scope: scopes,

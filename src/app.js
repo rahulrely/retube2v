@@ -4,9 +4,18 @@ import cors from "cors";
 import session from 'express-session';
 const app = express();
 
+const allowedOrigins = [process.env.CORS_ORIGIN];
 app.use(cors({
-    origin:process.env.CORS_ORIGIN,
-    credentials:true
+    origin: function (origin, callback) {
+        // allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) === -1) {
+            const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+            return callback(new Error(msg), false);
+        }
+        return callback(null, true);
+    },
+    credentials: true // Important for sending cookies with cross-origin requests
 }));
 
 app.get('/api/v1/hello', (req, res) => { //verification for beckend and frontend connections

@@ -1,81 +1,107 @@
-import  {asyncHandler} from "../utils/asynchandler.js";
-import {APIError} from "../utils/APIError.js";
-import {APIResponse} from "../utils/APIResponse.js";
+import { asyncHandler } from "../utils/asynchandler.js";
+import { APIError } from "../utils/APIError.js";
+import { APIResponse } from "../utils/APIResponse.js";
 import User from "../models/user.model.js";
 import crypto from "crypto";
-import jwt  from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import url from 'url';
 import { oauth2Client } from "../google/auth.js";
-import { 
+import {
     sendVerificationEmail,
     sendInviteCodeEmail,
     sendPrimarySuccessEmail,
     sendSecondarySuccessEmail
- } from "../utils/email.resend.js";
+} from "../utils/email.resend.js";
 
- import {
-  generateInviteCodeEmailHTML
- } from "../email/mailTemplet.js";
+import {
+    generateInviteCodeEmailHTML
+} from "../email/mailTemplet.js";
 
-function generateInviteToken(length = 20){
+/**
+ * Generates a random invite token.
+ * @param {number} length - The desired length of the token.
+ * @returns {string} The generated token.
+ */
+function generateInviteToken(length = 20) {
     const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
     let token = '';
     const bytes = crypto.randomBytes(length);
     for (let i = 0; i < length; i++) {
-      token += charset[bytes[i] % charset.length];
+        token += charset[bytes[i] % charset.length];
     }
     return token;
 }
 
-const generateAccessAndRefreshTokens = async(userId) =>{
+/**
+ * Generates an access token and a refresh token for a given user.
+ * @param {string} userId - The ID of the user.
+ * @returns {Promise<{accessToken: string, refreshToken: string}>} An object containing the access and refresh tokens.
+ * @throws {APIError} If something goes wrong during token generation.
+ */
+const generateAccessAndRefreshTokens = async (userId) => {
     try {
         const user = await User.findById(userId);
 
         const accessToken = user.generateAccessToken();
-        const refreshToken =user.generateRefreshToken();
+        const refreshToken = user.generateRefreshToken();
 
         user.refreshToken = refreshToken;
-        await user.save({validateBeforeSave : false});// await
+        await user.save({ validateBeforeSave: false }); // Save the new refresh token
 
-        return {accessToken,refreshToken};
+        return { accessToken, refreshToken };
 
     } catch (error) {
-        throw new APIError(500,"Went Wrong while generating refesh and assecc token");
+        throw new APIError(500, "Went Wrong while generating refresh and access token");
     }
 }
 
+/**
+ * Generates a random 6-digit verification code.
+ * @returns {string} The generated verification code.
+ */
 const genVerificationCode = () => {
     return crypto.randomInt(100000, 999999).toString();
 };
-const checkEmailAvailability = asyncHandler(async(req,res)=>{
+
+/**
+ * Checks the availability of an email address.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ */
+const checkEmailAvailability = asyncHandler(async (req, res) => {
     const encodedEmail = req.query.email;
 
-    if(!encodedEmail){
-        throw new APIError(404,"Email is Required to check")
+    if (!encodedEmail) {
+        throw new APIError(404, "Email is Required to check");
     }
     const decodedEmail = decodeURIComponent(encodedEmail);
 
-    const foundUser = await User.findOne({ email : decodedEmail });
+    const foundUser = await User.findOne({ email: decodedEmail });
 
-    if(foundUser){
+    if (foundUser) {
         return res
-        .status(200)
-        .json({
-            message : "This Email ID is Already Registered with Us",
-            success : "true",
-            status : "200"
-            })
-    }else{
+            .status(200)
+            .json({
+                message: "This Email ID is Already Registered with Us",
+                success: true, // Use boolean for success
+                status: 200
+            });
+    } else {
         return res
-        .status(200)
-        .json({
-            message : "Email ID is Available",
-            success : "true",
-            status : "200"
-        })
+            .status(200)
+            .json({
+                message: "Email ID is Available",
+                success: true, // Use boolean for success
+                status: 200
+            });
     }
 });
 
+/**
+ * Registers a new user.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ */
 const registerUser = asyncHandler(async (req, res) => {
     const { name, email, password, role } = req.body;
 
@@ -92,17 +118,28 @@ const registerUser = asyncHandler(async (req, res) => {
 
     // Generate invite code & verification code
     const inviteCode = generateInviteToken();
-    const inviteCodeExpiry = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000); //10 days
+    const inviteCodeExpiry = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000); // 10 days
 
     const verifyCode = genVerificationCode();
     const verifyCodeExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour expiry
 
-    //generating tempToken for email verification and google link
+    // --- RE-ADDED: generating tempToken for email verification and other flows (if still needed) ---
     const tempToken = jwt.sign(
         { email }, // generating using email
         process.env.TEMP_TOKEN_SECRET,
         { expiresIn: process.env.TEMP_TOKEN_EXPIRY }
     );
+    // --- NEW: Store email in session for Google Linking flow ---
+    // Ensure express-session is configured in your main app.js
+    if (req.session) {
+        req.session.emailForGoogleLink = email;
+        // You might also store the tempToken in session if you want to verify it later by session.
+        // req.session.tempTokenValue = tempToken;
+    } else {
+        console.warn("Express session not available in registerUser. Google Linking might fail.");
+    }
+
+
     // Create user
     const user = await User.create({
         name,
@@ -110,15 +147,15 @@ const registerUser = asyncHandler(async (req, res) => {
         password,
         role,
         verifyCode,
-        tempToken,
+        tempToken, 
         verifyCodeExpiry,
-        ...(role === "Primary" && { inviteCode }),// Only add inviteCode for "primary" users
-        ...(role === "Primary" && { inviteCodeExpiry }) // 
+        ...(role === "Primary" && { inviteCode }), // Only add inviteCode for "primary" users
+        ...(role === "Primary" && { inviteCodeExpiry })
     });
 
-    console.log(user);
+    console.log("Registered User:", user);
 
-    //Email is Not Enabled due to Domain Purchased Required
+    // Email is Not Enabled due to Domain Purchased Required
     // Send verification email after user is created
     // try {
     //     await sendVerificationEmail(email, name, verifyCode);
@@ -133,33 +170,36 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new APIError(500, "Unable to retrieve user data after registration");
     }
 
-    const options1 = {
-        httpOnly : true,
-        secure : true,
+    // Cookie options for tempToken
+    const tempTokenCookieOptions = {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None", // critical for cross-origin cookies
+        domain: process.env.COOKIE_DOMAIN || undefined, // Set a base domain like '.onrender.com'
+        maxAge: 1000 * 60 * 15, // 15 min expiry for tempToken
     };
-    const options2 = {
-        httpOnly : true,
-        secure : true,
-        sameSite: "none", // critical for cross-origin cookies
-        maxAge: 1000 * 60 * 15, // optional: 15 min expiry
-    }
-
+    // Ensure tempToken is set as a cookie for other flows (like verifyUser)
+    // Removed redundant .cookie call
     return res
-    .status(201)
-    .cookie("tempToken",tempToken,options2)
-    .cookie("tempToken",tempToken,options2)
-    .json(
-        new APIResponse(200, createdUser, "User registered successfully. Verification email sent.")
-    );
+        .status(201)
+        .cookie("tempToken", tempToken, tempTokenCookieOptions) // tempToken is now defined
+        .json(
+            new APIResponse(200, createdUser, "User registered successfully. Verification email sent.")
+        );
 });
 
+/**
+ * Verifies user using a code and tempToken from cookies.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ */
 const verifyUser = asyncHandler(async (req, res) => {
     const tempToken = req.cookies?.tempToken;
 
-    if(!tempToken){
-        throw new APIError(404,"No temp Cookies");
+    if (!tempToken) {
+        throw new APIError(404, "No temp cookie found for verification.");
     }
-    const decodeToken = jwt.verify(tempToken,process.env.TEMP_TOKEN_SECRET)    
+    const decodeToken = jwt.verify(tempToken, process.env.TEMP_TOKEN_SECRET);
 
     const email = decodeToken.email;
     const { verifyCode } = req.body;
@@ -171,7 +211,7 @@ const verifyUser = asyncHandler(async (req, res) => {
     }
 
     // Check if verification code is expired
-    const isCodeValid = user.verifyCodeExpiry > Date.now();
+    const isCodeValid = user.verifyCodeExpiry && user.verifyCodeExpiry > Date.now();
     if (!isCodeValid) {
         throw new APIError(400, `Verification code validity expired ${Date.now()}`);
     }
@@ -181,25 +221,31 @@ const verifyUser = asyncHandler(async (req, res) => {
         user.isVerified = true;
         user.verifyCode = undefined;
         user.verifyCodeExpiry = undefined;
-        
+
         // Save changes to database
-        await user.save();
+        await user.save({ validateBeforeSave: false }); // Set validateBeforeSave to false if verifyCode/Expiry are being unset
+
         const userrole = user.role;
         return res.status(200).json(
-            new APIResponse(200,{role : userrole},"User is successfully verified")
+            new APIResponse(200, { role: userrole }, "User is successfully verified")
         );
     }
 
     throw new APIError(400, "Invalid verification code");
 });
 
+/**
+ * Verifies user without a verification code (e.g., direct link).
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ */
 const verifyUserNOT = asyncHandler(async (req, res) => {
     const tempToken = req.cookies?.tempToken;
-    
-    if(!tempToken){
-        throw new APIError(404,"No temp Cookies");
+
+    if (!tempToken) {
+        throw new APIError(404, "No temp cookie found for verification.");
     }
-    const decodeToken = jwt.verify(tempToken,process.env.TEMP_TOKEN_SECRET)    
+    const decodeToken = jwt.verify(tempToken, process.env.TEMP_TOKEN_SECRET);
 
     const email = decodeToken.email;
 
@@ -208,143 +254,197 @@ const verifyUserNOT = asyncHandler(async (req, res) => {
     if (!user) {
         throw new APIError(404, "User doesn't exist");
     }
-    
+
     user.isVerified = true;
-    
+
     // Save changes to database
-    await user.save();
+    await user.save({ validateBeforeSave: false });
+
     const userrole = user.role;
     return res.status(200).json(
-        new APIResponse(200,{role : userrole},"User is successfully verified")
+        new APIResponse(200, { role: userrole }, "User is successfully verified")
     );
 });
 
+/**
+ * Handles Google OAuth callback for linking.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ */
 const googleLink = asyncHandler(async (req, res) => {
-
     try {
-        const {email} = jwt.verify(req.cookies.tempToken,process.env.TEMP_TOKEN_SECRET)
-        // const accEmail = req // Email from auth middleware (access token)
-    
+        // Log received session data for debugging
+        console.log("googleLink - req.session.emailForGoogleLink:", req.session?.emailForGoogleLink);
+        console.log("googleLink - req.session.googleAuthState:", req.session?.googleAuthState);
+        console.log("googleLink - req.query.state:", req.query?.state);
+
+        const email = req.session?.emailForGoogleLink; // Get email from session
+
         if (!email) {
-            throw new APIError(404, "No temp Token");
-        }  
-    
-        console.log("Session State:", req.session.state); // Check if session state exists
-        console.log("Received State:", req.query.state); // Check if state matches
-    
-        //GOOGLE #START
+            // Handle case where session data is missing or expired
+            console.error("googleLink: Email not found in session. Session might be expired or not set.");
+            throw new APIError(401, "Session data missing for Google linking. Please try registering again.");
+        }
+
         // Handle the OAuth 2.0 server response
         let q = url.parse(req.url, true).query;
-    
-        console.log("url rahu:",q) ///remove ##
-    
+
+        console.log("url query received:", q);
+
         if (q.error) { // An error response e.g. error=access_denied
-            console.log('Error:' + q.error);
-        } else if (q.state !== req.session.state) { //check state value
-            console.log('State mismatch. Possible CSRF attack');
-            res.end('State mismatch. Possible CSRF attack');
+            console.error('Google OAuth Error:' + q.error);
+            throw new APIError(400, `Google OAuth Error: ${q.error}`);
+        }
+        // CSRF State verification
+        else if (q.state !== req.session.googleAuthState) { // Verify state value
+            console.error('State mismatch. Possible CSRF attack. Expected:', req.session.googleAuthState, 'Received:', q.state);
+            throw new APIError(403, 'State mismatch. Possible CSRF attack.');
         } else { // Get access and refresh tokens (if access_type is offline)
             let { tokens } = await oauth2Client.getToken(q.code);
             oauth2Client.setCredentials(tokens);
-    
-            /** Save credential to the global variable in case access token was refreshed.
-            * ACTION ITEM: In a production app, you likely want to save the refresh token
-            *              in a secure persistent database instead. */
-            // userCredential = tokens; // test only
-            // User authorized the request. Now, check which scopes were granted.
-            console.log("googleToken rahul:",tokens);
+
+            console.log("googleToken received:", tokens);
+
             const googleRefreshToken = tokens?.refresh_token;
             const googleAccessToken = tokens?.access_token;
-            if(!googleRefreshToken){
-                throw new APIError(405,"Refresh Token Not Found in Google Response")
+
+            if (!googleRefreshToken) {
+                throw new APIError(405, "Google Refresh Token Not Found in Google Response");
             }
-            if(!googleAccessToken){
-                throw new APIError(405,"Refresh Token Not Found in Google Response")
+            if (!googleAccessToken) {
+                throw new APIError(405, "Google Access Token Not Found in Google Response");
             }
-            //check for scope
+            // Check for required scopes
             if (
-                !tokens.scope.includes('https://www.googleapis.com/auth/youtube') && 
                 !tokens.scope.includes('https://www.googleapis.com/auth/youtube.upload')
             ) {
-                throw new APIError(404,"Failed: Required scopes are missing!");
+                throw new APIError(404, "Failed: Required scopes (YouTube/YouTube Upload) are missing!");
             }
-            const user = await User.findOne({ email });
+
+            const user = await User.findOne({ email }); // Find user using email from session
+
+            if (!user) {
+                console.error(`User with email ${email} not found after Google OAuth.`);
+                throw new APIError(404, "User not found in database for Google linking email.");
+            }
+
             user.googleRefreshToken = googleRefreshToken; //Saving Google Refresh Token in MongoDB
-    
-            const inviteCode = user.inviteCode;
+
+            const inviteCode = user.role === "Primary" ? user.inviteCode : undefined; // Only primary users have invite codes
             const name = user.name;
-    
-            const {accessToken , refreshToken } = await generateAccessAndRefreshTokens(user._id);
-    
-            await user.save(); // saving to db
-            
-            // Send Invitation for Secondary User email after to user for invite code
-            // try {
-            //     await sendInviteCodeEmail(email, name, inviteCode);
-            //     console.log(`Invite Code email sent to ${email}`);
-            // } catch (err) {
-            //     console.error(`Email sending failed: ${err.message}`);
-            //     throw new APIError(500, "User Google linked but failed to send inviteCode email");
-            // }
-    
-            const options = {
-                httpOnly : true,
-                secure : true
+
+            const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
+
+            await user.save({ validateBeforeSave: false }); // saving to db
+
+            // --- Clear session data after successful linking ---
+            if (req.session) {
+                req.session.emailForGoogleLink = undefined;
+                req.session.googleAuthState = undefined; // Clear CSRF state
+                // You might also destroy the whole session if it's no longer needed
+                // req.session.destroy((err) => {
+                //     if (err) console.error("Error destroying session:", err);
+                // });
             }
+
+            const options = {
+                httpOnly: true,
+                secure: true,
+                sameSite: "None", // Ensure this is explicitly set for cross-domain if needed
+                domain: process.env.COOKIE_DOMAIN || undefined, // Set a base domain like '.onrender.com'
+            };
             return res
-            .status(200)
-            .cookie("accessToken",accessToken,options)
-            .cookie("refreshToken",refreshToken,options)
-            .redirect(`${process.env.FRONTEND_SUCCESS_URL}?linked=true`);
+                .status(200)
+                .cookie("accessToken", accessToken, options)
+                .cookie("refreshToken", refreshToken, options)
+                .redirect(`${process.env.FRONTEND_SUCCESS_URL}?linked=true`);
         }
     } catch (error) {
-        console.log("Error In Google Linking :",error)
+        console.error("Error In Google Linking:", error); // Use console.error for errors
+        // Redirect to a frontend error page with a helpful message
+        const errorMessage = error instanceof APIError ? error.message : "An unexpected error occurred during Google linking.";
+        const statusCode = error instanceof APIError ? error.statusCode : 500;
+        return res.status(statusCode).redirect(`${process.env.FRONTEND_ERROR_URL}?error=${encodeURIComponent(errorMessage)}`);
+    } finally {
+        // Clear tempToken cookie if it was set, as it's no longer relevant for Google Linking flow
+        const tempTokenCookieOptions = {
+            httpOnly: true,
+            secure: true,
+            sameSite: "None",
+            domain: process.env.COOKIE_DOMAIN || undefined,
+        };
+        // This will only clear if it was present and set by your app.
+        // It's safer to clear here if the flow concludes.
+        res.clearCookie('tempToken', tempTokenCookieOptions);
     }
 });
 
-const inviteCodefun = asyncHandler(async(req, res) =>{
-    const {xemail} = jwt.verify(req.cookies.tempToken,process.env.TEMP_TOKEN_SECRET)
-
-    const user = await User.findOne({ xemail });
-
-    const email = user?.email ;
-    const name = user?.name ;
-    const inviteCode = user?.inviteCode;
-    const options = {
-        httpOnly : true,
-        secure : true,
-    }
-
-    const htmlInvite = generateInviteCodeEmailHTML(name,email, inviteCode)
-    return res
-    .status(200)
-    .clearCookie('tempToken',options)
-    .json(
-        new APIResponse(
-            200,
-            {
-                html : htmlInvite
-            },
-            "Your account Succesfully created. Now share with your secondary"
-        )
-    )
-});
-
-const primaryAndSecondaryLink = asyncHandler(async (req, res) => {
+/**
+ * Sends invite code via email.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ */
+const inviteCodefun = asyncHandler(async (req, res) => {
+    // This function still relies on tempToken cookie.
     const tempToken = req.cookies?.tempToken;
     if(!tempToken){
-        throw new APIError(404,"No temp Cookies");
+        throw new APIError(404,"No temp cookie found for invite code generation.");
     }
-    const decodeToken = jwt.verify(tempToken,process.env.TEMP_TOKEN_SECRET)
-    
-    const secondaryEmail = decodeToken.email;
-    const { email, inviteCode } = req.body;
+    const { email: xemail } = jwt.verify(tempToken, process.env.TEMP_TOKEN_SECRET); // Using xemail to avoid conflict
 
-    if(!email){
-        throw new APIError(404,"Email ID not recieved");
+    const user = await User.findOne({ email: xemail }); // Use xemail from the token
+
+    if(!user) {
+        throw new APIError(404, "User not found for invite code email.");
     }
-    if(!inviteCode){
-        throw new APIError(404,"Email ID not recieved")
+
+    const email = user?.email;
+    const name = user?.name;
+    const inviteCode = user?.inviteCode; // Ensure inviteCode exists on Primary user
+
+    const options = {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
+        domain: process.env.COOKIE_DOMAIN || undefined,
+    }
+
+    const htmlInvite = generateInviteCodeEmailHTML(name, email, inviteCode);
+    return res
+        .status(200)
+        .clearCookie('tempToken', options)
+        .json(
+            new APIResponse(
+                200,
+                {
+                    html: htmlInvite
+                },
+                "Your account successfully created. Now share with your secondary"
+            )
+        );
+});
+
+/**
+ * Links primary and secondary users.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ */
+const primaryAndSecondaryLink = asyncHandler(async (req, res) => {
+    // This function still relies on tempToken cookie.
+    const tempToken = req.cookies?.tempToken;
+    if (!tempToken) {
+        throw new APIError(404, "No temp cookie found for linking primary and secondary users.");
+    }
+    const decodeToken = jwt.verify(tempToken, process.env.TEMP_TOKEN_SECRET);
+
+    const secondaryEmail = decodeToken.email;
+    const { email, inviteCode } = req.body; // email here is primary user's email
+
+    if (!email) {
+        throw new APIError(404, "Primary user email not received");
+    }
+    if (!inviteCode) {
+        throw new APIError(404, "Invite code not received");
     }
     // Fetch users from DB
     const primaryUser = await User.findOne({ email });
@@ -356,14 +456,14 @@ const primaryAndSecondaryLink = asyncHandler(async (req, res) => {
     if (!secondaryUser) {
         throw new APIError(404, "Secondary user not found");
     }
-    
-    // Check if verification code is expired
-    const isCodeValid = primaryUser.inviteCodeExpiry > Date.now();
+
+    // Check if invite code is expired
+    const isCodeValid = primaryUser.inviteCodeExpiry && primaryUser.inviteCodeExpiry > Date.now();
     if (!isCodeValid) {
-        throw new APIError(400, `Invitatication code validity expired ${Date.now()}`);
+        throw new APIError(400, `Invitation code validity expired ${Date.now()}`);
     }
 
-    // Validate the token's content
+    // Validate the invite code's content
     if (primaryUser.inviteCode !== inviteCode) {
         throw new APIError(400, "Invalid invite code");
     }
@@ -372,11 +472,11 @@ const primaryAndSecondaryLink = asyncHandler(async (req, res) => {
     secondaryUser.linkedUser = primaryUser._id;
     primaryUser.linkedUser = secondaryUser._id;
 
-    secondaryUser.inviteCode = undefined;
+    secondaryUser.inviteCode = undefined; // Clear inviteCode for secondary after linking
     secondaryUser.youtubeId = undefined;
-    secondaryUser.tempToken = undefined;
+    secondaryUser.tempToken = undefined; // Clear tempToken field in DB if present
 
-    primaryUser.inviteCode = undefined;
+    primaryUser.inviteCode = undefined; // Clear inviteCode for primary after linking
     primaryUser.inviteCodeExpiry = undefined;
 
     //email details
@@ -385,92 +485,102 @@ const primaryAndSecondaryLink = asyncHandler(async (req, res) => {
     const primaryUserEmail = primaryUser.email;
     const secondaryUserEmail = secondaryUser.email;
 
-    const {accessToken , refreshToken } = await generateAccessAndRefreshTokens(secondaryUser._id);
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(secondaryUser._id);
 
     // Save changes to DB
-    await secondaryUser.save();
-    await primaryUser.save();
+    await secondaryUser.save({ validateBeforeSave: false });
+    await primaryUser.save({ validateBeforeSave: false });
 
     const options = {
-        httpOnly : true,
-        secure : true,
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
+        domain: process.env.COOKIE_DOMAIN || undefined, // Set a base domain like '.onrender.com'
     }
 
-    // Send Success for Primary User email 
-        // try {
-        //     await sendPrimarySuccessEmail(primaryUserEmail, primaryUserName);
-        //     console.log(`Sent Success for Primary User email ${primaryUserEmail}`);
-        // } catch (err) {
-        //     console.error(`Email sending failed: ${err.message}`);
-        //     throw new APIError(500, "Users linked but failed to Success for Primary User email");
-        // }
+    // Send Success for Primary User email
+    // try {
+    //     await sendPrimarySuccessEmail(primaryUserEmail, primaryUserName);
+    //     console.log(`Sent Success for Primary User email ${primaryUserEmail}`);
+    // } catch (err) {
+    //     console.error(`Email sending failed: ${err.message}`);
+    //     throw new APIError(500, "Users linked but failed to Success for Primary User email");
+    // }
 
-    // Send Success for Secondary User email 
-        // try {
-        //     await sendSecondarySuccessEmail(secondaryUserEmail,secondaryUserName,primaryUserName);
-        //     console.log(`Sent Success for Secondary User email ${secondaryUserEmail}`);
-        // } catch (err) {
-        //     console.error(`Email sending failed: ${err.message}`);
-        //     throw new APIError(500, "Users linked but failed to send Success for Secondary User email");
-        // }
+    // Send Success for Secondary User email
+    // try {
+    //     await sendSecondarySuccessEmail(secondaryUserEmail,secondaryUserName,primaryUserName);
+    //     console.log(`Sent Success for Secondary User email ${secondaryUserEmail}`);
+    // } catch (err) {
+    //     console.error(`Email sending failed: ${err.message}`);
+    //     throw new APIError(500, "Users linked but failed to send Success for Secondary User email");
+    // }
 
     return res
-    .status(200)
-    .clearCookie('tempToken',options)
-    .cookie("accessToken",accessToken,options)
-    .cookie("refreshToken",refreshToken,options)
-    .redirect(`${process.env.FRONTEND_SEC_SUCCESS_URL}?linked=true`);
+        .status(200)
+        .clearCookie('tempToken', options) // Clear tempToken cookie
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .redirect(`${process.env.FRONTEND_SEC_SUCCESS_URL}?linked=true`);
 });
 
-const loginUser = asyncHandler(async (req,res) =>{
-    const { email , password } = req.body;
+/**
+ * Logs in a user.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ */
+const loginUser = asyncHandler(async (req, res) => {
+    const { email, password } = req.body;
 
-    if(!email){
-        throw new APIError(404,"Email is required for login");
+    if (!email) {
+        throw new APIError(404, "Email is required for login");
     }
 
     const user = await User.findOne({ email });
 
-    if(!user){
-        throw new APIError(404,"User doesn't Exist");
+    if (!user) {
+        throw new APIError(404, "User doesn't Exist");
     }
 
     const isPasswordValid = await user.isPasswordCorrect(password);
 
-    if(!isPasswordValid){
-        throw new APIError(401,"Password Incorrect");
+    if (!isPasswordValid) {
+        throw new APIError(401, "Password Incorrect");
     }
 
-    const {accessToken , refreshToken } = await generateAccessAndRefreshTokens(user._id);
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
 
-    //if db call is expensive then dont do below call and update previous user #04
-
-    const loggedInUser = await User.findById(user._id).select("-password -refreshToken -inviteCode") //#04
+    // If db call is expensive then don't do below call and update previous user #04
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken -inviteCode");
 
     const options = {
-        httpOnly : true,
-        secure : true
+        httpOnly: true,
+        secure: true,
+        sameSite: "None", // Ensure consistent SameSite
+        domain: process.env.COOKIE_DOMAIN || undefined, // Set a base domain
     }
 
     return res
-    .status(200)
-    .cookie("accessToken",accessToken,options)
-    .cookie("refreshToken",refreshToken,options)
-    .json(
-        new APIResponse(
-            200,
-            {
-                user: loggedInUser, accessToken,refreshToken // for mobile apps
-            },
-            "User logged In Successfully"
-        )
-    )
-
-    
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json(
+            new APIResponse(
+                200,
+                {
+                    user: loggedInUser, accessToken, refreshToken // for mobile apps
+                },
+                "User logged In Successfully"
+            )
+        );
 });
 
+/**
+ * Initiates password reset by sending a verification code.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ */
 const passwordReset = asyncHandler(async (req, res) => {
-    
     const user = req.user; // middleware incoming
 
     const email = user.email;
@@ -480,7 +590,6 @@ const passwordReset = asyncHandler(async (req, res) => {
     const verifyCodeGen = genVerificationCode();
     const verifyCodeExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
 
-    
     user.forgetPasswordCode = verifyCodeGen;
     user.forgetPasswordCodeExpiry = verifyCodeExpiry;
 
@@ -495,7 +604,8 @@ const passwordReset = asyncHandler(async (req, res) => {
     //     throw new APIError(500, "Password Reset failed email");
     // }
 
-    // Get user input from body
+    // Get user input from body (This part of the code is usually in a separate endpoint
+    // for actual password reset verification, not the initiation. Leaving as-is per original structure)
     const { newPassword, verifyCode } = req.body;
 
     const freshUser = await User.findById(user._id);
@@ -527,32 +637,44 @@ const passwordReset = asyncHandler(async (req, res) => {
 
 });
 
-const logoutUser =asyncHandler(async(req,res) =>{
+/**
+ * Logs out a user.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ */
+const logoutUser = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(
         req.user._id,
         {
-            $set:{
-                refreshToken : undefined
+            $set: {
+                refreshToken: undefined
             }
-        },{
-            new : true
+        }, {
+            new: true
         }
     )
 
     const options = {
-        httpOnly : true,
-        secure : true
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
+        domain: process.env.COOKIE_DOMAIN || undefined,
     }
 
     return res
-    .status(200)
-    .clearCookie("accessToken",options)
-    .clearCookie("refreshToken",options)
-    .json(new APIResponse(200,{},"User Logged Out"));
-    
+        .status(200)
+        .clearCookie("accessToken", options)
+        .clearCookie("refreshToken", options)
+        .json(new APIResponse(200, {}, "User Logged Out"));
+
 });
 
-const rolecheck = asyncHandler(async(req,res)=>{
+/**
+ * Checks the user's role.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ */
+const rolecheck = asyncHandler(async (req, res) => {
     const user = req?.user; // user from auth middleware
 
     if (!user) {
@@ -561,72 +683,84 @@ const rolecheck = asyncHandler(async(req,res)=>{
 
     if (user.role === "Primary" || user.role === "Secondary") {
         return res
+            .status(200)
+            .json(
+                new APIResponse(200, { role: user.role }, "Role Check Successful")
+            )
+    }
+
+    return res
+        .status(405)
+        .json(
+            new APIResponse(405, {}, "Unauthorized | Invalid Account | Suspicious Account")
+        )
+
+});
+
+/**
+ * Fetches user details including linked user.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ */
+const userDetails = asyncHandler(async (req, res) => {
+    const user = req?.user;
+
+    if (!user) {
+        throw new APIError(403, "Invalid User or user Not found");
+    }
+
+    const linkedUser = await User.findById(user.linkedUser); // linkedUser can be null if not linked
+
+    return res
         .status(200)
         .json(
-            new APIResponse(200,{role : user.role},"Role Check Successfull")
+            new APIResponse(
+                200,
+                {
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    isVerified: user.isVerified,
+                    // Only include linked user details if linkedUser exists
+                    ...(linkedUser && { linkedUserName: linkedUser.name }),
+                    ...(linkedUser && { linkedUserEmail: linkedUser.email }),
+                },
+                "User Details Successfully Fetched"
+            )
         )
-    }
-
-    return res
-    .status(405)
-    .json(
-        new APIResponse(405,{},"Unauthorized | Invalid Account | Supicious Account")
-    )
-
 });
 
-const userDetails =asyncHandler(async(req,res)=>{
+/**
+ * Edits the user's name.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ */
+const editName = asyncHandler(async (req, res) => {
     const user = req?.user;
 
-    if(!user){
-        throw new APIError(403,"Invalid User or user Not found");
-    }
-
-    const linkedUser = await User.findById(user.linkedUser);
-
-    return res
-    .status(200)
-    .json(
-        new APIResponse(
-            200,
-            {
-                name : user.name,
-                email : user.email,
-                role : user.role,
-                isVerified : user.isVerified,
-                linkedUserName : linkedUser.name,
-                linkedUserEmail : linkedUser.email,
-            },
-            "User Details Succesfully Fetched"
-        )
-    )
-});
-
-const editName = asyncHandler(async(req,res)=>{
-    const user = req?.user;
-
-    if(!user){
-        throw new APIError(403,"Invalid User or User Not Found");
+    if (!user) {
+        throw new APIError(403, "Invalid User or User Not Found");
     };
 
     let { name } = req?.body;
-    
-    if(!name){
-        throw new APIError(404,"Name must be sent");
+
+    if (!name) {
+        throw new APIError(404, "Name must be sent");
     };
 
     user.name = name;
 
-    await user.save();
+    await user.save({ validateBeforeSave: false }); // Save the updated name
 
     return res
-    .status(200)
-    .json(
-        new APIResponse(
-            200,
-            "User's Name Successfully Modified."
+        .status(200)
+        .json(
+            new APIResponse(
+                200,
+                {}, // No data needed in the response body for a simple update confirmation
+                "User's Name Successfully Modified."
+            )
         )
-    )
 
 })
 

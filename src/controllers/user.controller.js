@@ -180,6 +180,7 @@ const registerUser = asyncHandler(async (req, res) => {
     };
     // Ensure tempToken is set as a cookie for other flows (like verifyUser)
     // Removed redundant .cookie call
+    console.log(req.session.emailForGoogleLink);
     return res
         .status(201)
         .cookie("tempToken", tempToken, tempTokenCookieOptions) // tempToken is now defined

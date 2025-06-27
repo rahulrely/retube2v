@@ -34,6 +34,13 @@ app.use(session({
     secret: process.env.EXPRESS_SESSION_SECRET, // Replace with a strong secret
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({ // Use a persistent store for production
+        mongoUrl: process.env.MONGO_URI, // Your MongoDB connection string from environment variables
+        collectionName: 'sessions', // Name of the collection in your DB to store sessions
+        ttl: 14 * 24 * 60 * 60, // Session TTL in seconds (e.g., 14 days)
+        autoRemove: 'interval', // Auto-remove expired sessions
+        autoRemoveInterval: 10, // In minutes
+    }),
 }));
 
 //routes import

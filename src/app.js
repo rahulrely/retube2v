@@ -4,7 +4,7 @@ import cors from "cors";
 import session from 'express-session';
 const app = express();
 
-const allowedOrigins = [process.env.CORS_ORIGIN];
+const allowedOrigins = [process.env.CORS_ORIGIN,"http://localhost:3000"];
 app.use(cors({
     origin: function (origin, callback) {
         // allow requests with no origin (like mobile apps or curl requests)

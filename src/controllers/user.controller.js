@@ -275,7 +275,7 @@ const googleLink = asyncHandler(async (req, res) => {
     try {
         // Log received session data for debugging
         console.log("googleLink - req.session.emailForGoogleLink:", req.session?.emailForGoogleLink);
-        console.log("googleLink - req.session.googleAuthState:", req.session?.googleAuthState);
+        console.log("googleLink - req.session.state:", req.session?.state);
         console.log("googleLink - req.query.state:", req.query?.state);
 
         const email = req.session?.emailForGoogleLink; // Get email from session
@@ -296,8 +296,8 @@ const googleLink = asyncHandler(async (req, res) => {
             throw new APIError(400, `Google OAuth Error: ${q.error}`);
         }
         // CSRF State verification
-        else if (q.state !== req.session.googleAuthState) { // Verify state value
-            console.error('State mismatch. Possible CSRF attack. Expected:', req.session.googleAuthState, 'Received:', q.state);
+        else if (q.state !== req.session.state) { // Verify state value
+            console.error('State mismatch. Possible CSRF attack. Expected:', req.session.state, 'Received:', q.state);
             throw new APIError(403, 'State mismatch. Possible CSRF attack.');
         } else { // Get access and refresh tokens (if access_type is offline)
             let { tokens } = await oauth2Client.getToken(q.code);
@@ -318,7 +318,7 @@ const googleLink = asyncHandler(async (req, res) => {
             if (
                 !tokens.scope.includes('https://www.googleapis.com/auth/youtube.upload')
             ) {
-                throw new APIError(404, "Failed: Required scopes (YouTube/YouTube Upload) are missing!");
+                throw new APIError(404, "Failed: Required scope YouTube Upload is missing!");
             }
 
             const user = await User.findOne({ email }); // Find user using email from session
@@ -340,8 +340,7 @@ const googleLink = asyncHandler(async (req, res) => {
             // --- Clear session data after successful linking ---
             if (req.session) {
                 req.session.emailForGoogleLink = undefined;
-                req.session.googleAuthState = undefined; // Clear CSRF state
-                // You might also destroy the whole session if it's no longer needed
+                req.session.state = undefined; // Clear CSRF state
                 // req.session.destroy((err) => {
                 //     if (err) console.error("Error destroying session:", err);
                 // });
@@ -350,8 +349,7 @@ const googleLink = asyncHandler(async (req, res) => {
             const options = {
                 httpOnly: true,
                 secure: true,
-                sameSite: "None", // Ensure this is explicitly set for cross-domain if needed
-                domain: process.env.COOKIE_DOMAIN || undefined, // Set a base domain like '.onrender.com'
+                sameSite: "None", 
             };
             return res
                 .status(200)
@@ -360,22 +358,11 @@ const googleLink = asyncHandler(async (req, res) => {
                 .redirect(`${process.env.FRONTEND_SUCCESS_URL}?linked=true`);
         }
     } catch (error) {
-        console.error("Error In Google Linking:", error); // Use console.error for errors
+        console.error("Error In Google Linking:", error);
         // Redirect to a frontend error page with a helpful message
         const errorMessage = error instanceof APIError ? error.message : "An unexpected error occurred during Google linking.";
         const statusCode = error instanceof APIError ? error.statusCode : 500;
         return res.status(statusCode).redirect(`${process.env.FRONTEND_ERROR_URL}?error=${encodeURIComponent(errorMessage)}`);
-    } finally {
-        // Clear tempToken cookie if it was set, as it's no longer relevant for Google Linking flow
-        const tempTokenCookieOptions = {
-            httpOnly: true,
-            secure: true,
-            sameSite: "None",
-            domain: process.env.COOKIE_DOMAIN || undefined,
-        };
-        // This will only clear if it was present and set by your app.
-        // It's safer to clear here if the flow concludes.
-        res.clearCookie('tempToken', tempTokenCookieOptions);
     }
 });
 

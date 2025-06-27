@@ -5,6 +5,7 @@ import session from 'express-session';
 import MongoStore from 'connect-mongo';
 const app = express();
 
+app.set('trust proxy', 1);
 const allowedOrigins = [process.env.CORS_ORIGIN,"http://localhost:3000"];
 app.use(cors({
     origin: function (origin, callback) {
@@ -42,6 +43,20 @@ app.use(session({
         autoRemove: 'interval', // Auto-remove expired sessions
         autoRemoveInterval: 10, // In minutes
     }),
+    cookie: {
+        secure: process.env.NODE_ENV === 'production', // Only send over HTTPS in production
+        httpOnly: true, // Prevent client-side JS access
+        // CRITICAL FOR CROSS-ORIGIN:
+        sameSite: 'None', // Allow cross-site cookies
+        // Explicitly set the cookie domain to your backend's full domain if it's causing issues.
+        // Usually, leaving it undefined will default to the current host (retube2v.onrender.com).
+        // If your frontend needs to read it on a different subdomain of 'onrender.com', you'd use '.onrender.com'.
+        // But since your frontend is on vercel.app, the cookie needs to be tied to retube2v.onrender.com
+        // for it to be sent from vercel.app TO retube2v.onrender.com.
+        // It's likely correct as 'None' should handle it, but if still issues, make sure the domain is specific.
+        // domain: 'retube2v.onrender.com', // Explicitly set if default behavior is problematic
+        maxAge: 1000 * 60 * 60 * 24, // 24 hours (adjust as needed)
+    }
 }));
 
 //routes import

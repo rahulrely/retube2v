@@ -2,6 +2,7 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import session from 'express-session';
+import MongoStore from 'connect-mongo';
 const app = express();
 
 const allowedOrigins = [process.env.CORS_ORIGIN,"http://localhost:3000"];

@@ -16,6 +16,7 @@ import {
 } from "../controllers/user.controller.js";
 import { verifyJwt } from "../middlewares/auth.js";
 import { genGoogleURL } from "../google/auth.js";
+import { getEmail } from "../middlewares/getEmail.js";
 
 const router = Router();
 
@@ -35,7 +36,7 @@ router.route("/login").post(loginUser);
 ///Google ##Start
 
 // Step 1: Redirect user to Google for authentication
-router.route("/google").get(genGoogleURL);
+router.route("/google").get(getEmail,genGoogleURL);
 
 // Step 2: Handle Google OAuth Callback
 router.route("/google/callback").get(googleLink);

@@ -178,7 +178,7 @@ const registerUser = asyncHandler(async (req, res) => {
         // domain: process.env.DOMAIN,
         maxAge: 1000 * 60 * 15, // 15 min expiry for tempToken
     };
-    console.log(req.session.emailForGoogleLink);
+    console.log("Regsiter Route End");
     return res
         .status(201)
         .cookie("tempToken", tempToken, tempTokenCookieOptions) // tempToken is now defined

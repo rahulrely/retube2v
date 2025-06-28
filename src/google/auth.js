@@ -17,11 +17,10 @@ const scopes = [
 ];
 
 const genGoogleURL = asyncHandler(async(req,res)=>{
-    const tempToken = req.cookies?.tempToken;
-    if(!tempToken){
-        throw new APIError(404,"No temp cookie found for Google Auth.");
-    }
-    const { email } = jwt.verify(tempToken, process.env.TEMP_TOKEN_SECRET); 
+  const email = req.email;
+  if(!email){
+    throw new APIError(404,"No Email found for Google Auth.");
+  }
   const state = crypto.randomBytes(32).toString('hex');
   // Store state in the session
   req.session.state = state;

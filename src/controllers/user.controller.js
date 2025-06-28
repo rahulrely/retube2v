@@ -175,7 +175,7 @@ const registerUser = asyncHandler(async (req, res) => {
         httpOnly: true,
         secure: true,
         sameSite: "None", // critical for cross-origin cookies
-        domain: process.env.COOKIE_DOMAIN || undefined, // Set a base domain like '.onrender.com'
+        domain: process.env.DOMAIN,
         maxAge: 1000 * 60 * 15, // 15 min expiry for tempToken
     };
     // Ensure tempToken is set as a cookie for other flows (like verifyUser)

@@ -129,15 +129,15 @@ const registerUser = asyncHandler(async (req, res) => {
         process.env.TEMP_TOKEN_SECRET,
         { expiresIn: process.env.TEMP_TOKEN_EXPIRY }
     );
-    // --- NEW: Store email in session for Google Linking flow ---
-    // Ensure express-session is configured in your main app.js
-    if (req.session) {
-        req.session.emailForGoogleLink = email;
-        // You might also store the tempToken in session if you want to verify it later by session.
-        // req.session.tempTokenValue = tempToken;
-    } else {
-        console.warn("Express session not available in registerUser. Google Linking might fail.");
-    }
+    // // --- NEW: Store email in session for Google Linking flow ---
+    // // Ensure express-session is configured in your main app.js
+    // if (req.session) {
+    //     req.session.emailForGoogleLink = email;
+    //     // You might also store the tempToken in session if you want to verify it later by session.
+    //     // req.session.tempTokenValue = tempToken;
+    // } else {
+    //     console.warn("Express session not available in registerUser. Google Linking might fail.");
+    // }
 
 
     // Create user
@@ -178,8 +178,6 @@ const registerUser = asyncHandler(async (req, res) => {
         // domain: process.env.DOMAIN,
         maxAge: 1000 * 60 * 15, // 15 min expiry for tempToken
     };
-    // Ensure tempToken is set as a cookie for other flows (like verifyUser)
-    // Removed redundant .cookie call
     console.log(req.session.emailForGoogleLink);
     return res
         .status(201)

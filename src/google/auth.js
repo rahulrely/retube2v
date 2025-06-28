@@ -2,6 +2,7 @@ import { google } from "googleapis";
 import crypto from 'crypto';
 import { asyncHandler } from "../utils/asynchandler.js";
 import jwt from "jsonwebtoken";
+import { APIError } from "../utils/APIError.js";
 
 // Setup OAuth2 client
 const oauth2Client = new google.auth.OAuth2(
@@ -18,7 +19,7 @@ const scopes = [
 const genGoogleURL = asyncHandler(async(req,res)=>{
     const tempToken = req.cookies?.tempToken;
     if(!tempToken){
-        throw new APIError(404,"No temp cookie found for invite code generation.");
+        throw new APIError(404,"No temp cookie found for Google Auth.");
     }
     const { email } = jwt.verify(tempToken, process.env.TEMP_TOKEN_SECRET); 
   const state = crypto.randomBytes(32).toString('hex');

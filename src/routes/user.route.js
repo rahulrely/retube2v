@@ -12,7 +12,8 @@ import {
     userDetails,
     editName,
     verifyUserNOT,
-    inviteCodefun
+    inviteCodefun,
+    getEncryptedEmail
 } from "../controllers/user.controller.js";
 import { verifyJwt } from "../middlewares/auth.js";
 import { genGoogleURL } from "../google/auth.js";
@@ -34,6 +35,9 @@ router.route("/linkprimary").post(primaryAndSecondaryLink) // Example: POST with
 router.route("/login").post(loginUser);
 
 ///Google ##Start
+
+// Step 0: 
+router.route("/email").get(getEncryptedEmail)
 
 // Step 1: Redirect user to Google for authentication
 router.route("/google").get(getEmail,genGoogleURL);

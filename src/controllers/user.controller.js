@@ -12,7 +12,7 @@ import {
     sendPrimarySuccessEmail,
     sendSecondarySuccessEmail
 } from "../utils/email.resend.js";
-
+import CryptoJS from 'crypto-js';
 import {
     generateInviteCodeEmailHTML
 } from "../email/mailTemplet.js";
@@ -748,7 +748,38 @@ const editName = asyncHandler(async (req, res) => {
             )
         )
 
-})
+});
+/**
+ * Send Encrypted Email to frontend.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ */
+const getEncryptedEmail = asyncHandler(async (req, res) => {
+    const secret = process.env.EXPRESS_SESSION_SECRET;
+    
+    const tempToken = req.cookies?.tempToken;
+    if(!tempToken){
+        throw new APIError(404,"No temp cookie found for Google Auth.");
+    }
+const { email } = jwt.verify(tempToken, process.env.TEMP_TOKEN_SECRET); 
+
+if (!email) {
+        throw new APIError(400, "Email ID is required");
+    }
+
+    //Basic email format validation (optional)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        throw new APIError(400, "Invalid email format");
+    }
+    
+    const encryptedEmail = CryptoJS.AES.encrypt(email,secret).toString();
+    return res
+    .status(200)
+    .json(
+        new APIResponse(200, { email : encryptedEmail}, "Successfully Encrypted Email for Googgle Auth")
+    );
+});
 
 export {
     checkEmailAvailability,
@@ -763,5 +794,6 @@ export {
     userDetails,
     editName,
     verifyUserNOT,
-    inviteCodefun
+    inviteCodefun,
+    getEncryptedEmail
 };

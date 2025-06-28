@@ -46,7 +46,7 @@ app.use(session({
         ttl: 14 * 24 * 60 * 60, // Session TTL in seconds (e.g., 14 days)
         autoRemove: 'interval', // Auto-remove expired sessions
         autoRemoveInterval: 10, // In minutes
-        dbName :"retube2v session"
+        dbName :"resession"
     }),
     cookie: {
         secure: process.env.NODE_ENV === 'production', // Only send over HTTPS in production

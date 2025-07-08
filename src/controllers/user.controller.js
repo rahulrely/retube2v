@@ -83,7 +83,7 @@ const checkEmailAvailability = asyncHandler(async (req, res) => {
             .status(200)
             .json({
                 message: "This Email ID is Already Registered with Us",
-                success: true, // Use boolean for success
+                success: true,
                 status: 200
             });
     } else {
@@ -91,7 +91,7 @@ const checkEmailAvailability = asyncHandler(async (req, res) => {
             .status(200)
             .json({
                 message: "Email ID is Available",
-                success: true, // Use boolean for success
+                success: true,
                 status: 200
             });
     }
@@ -123,24 +123,14 @@ const registerUser = asyncHandler(async (req, res) => {
     const verifyCode = genVerificationCode();
     const verifyCodeExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour expiry
 
-    // --- RE-ADDED: generating tempToken for email verification and other flows (if still needed) ---
+    //Generating tempToken for Registeration Process
     const tempToken = jwt.sign(
         { email }, // generating using email
         process.env.TEMP_TOKEN_SECRET,
         { expiresIn: process.env.TEMP_TOKEN_EXPIRY }
     );
-    // // --- NEW: Store email in session for Google Linking flow ---
-    // // Ensure express-session is configured in your main app.js
-    // if (req.session) {
-    //     req.session.emailForGoogleLink = email;
-    //     // You might also store the tempToken in session if you want to verify it later by session.
-    //     // req.session.tempTokenValue = tempToken;
-    // } else {
-    //     console.warn("Express session not available in registerUser. Google Linking might fail.");
-    // }
 
-
-    // Create user
+    // Create User 
     const user = await User.create({
         name,
         email,
@@ -175,13 +165,12 @@ const registerUser = asyncHandler(async (req, res) => {
         httpOnly: true,
         secure: true,
         sameSite: "None", // critical for cross-origin cookies
-        // domain: process.env.DOMAIN,
         maxAge: 1000 * 60 * 15, // 15 min expiry for tempToken
     };
     console.log("Regsiter Route End");
     return res
         .status(201)
-        .cookie("tempToken", tempToken, tempTokenCookieOptions) // tempToken is now defined
+        .cookie("tempToken", tempToken, tempTokenCookieOptions)
         .json(
             new APIResponse(200, createdUser, "User registered successfully. Verification email sent.")
         );
@@ -234,7 +223,7 @@ const verifyUser = asyncHandler(async (req, res) => {
 });
 
 /**
- * Verifies user without a verification code (e.g., direct link).
+ * Verifies user without a verification code (#Temporary).
  * @param {Object} req - Express request object.
  * @param {Object} res - Express response object.
  */
@@ -366,7 +355,7 @@ const googleLink = asyncHandler(async (req, res) => {
 });
 
 /**
- * Sends invite code via email.
+ * Sends invite code via email. (#Temporary)
  * @param {Object} req - Express request object.
  * @param {Object} res - Express response object.
  */
@@ -459,7 +448,6 @@ const primaryAndSecondaryLink = asyncHandler(async (req, res) => {
     primaryUser.linkedUser = secondaryUser._id;
 
     secondaryUser.inviteCode = undefined; // Clear inviteCode for secondary after linking
-    secondaryUser.youtubeId = undefined;
     secondaryUser.tempToken = undefined; // Clear tempToken field in DB if present
 
     primaryUser.inviteCode = undefined; // Clear inviteCode for primary after linking

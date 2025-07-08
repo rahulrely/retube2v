@@ -1,4 +1,4 @@
-import mongoose, { Schema, Model } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
@@ -10,9 +10,7 @@ const userSchema = new Schema(
       match:/[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/g
      },
     password: { type: String, required: true },
-    role: { type: String, enum: ["Primary", "Secondary"], required: true },
-
-    
+    role: { type: String, enum: ["Primary", "Secondary"], required: true },    
     isVerified: { type: Boolean, default: false },
     forgetPasswordCode: { type: String, default: null },
     forgetPasswordCodeExpiry: { type: Date, default: null },
@@ -24,7 +22,6 @@ const userSchema = new Schema(
     rawVideoList : [{ type: mongoose.Schema.Types.ObjectId, ref: "Raw", default: null }],
     videoList: [ { type: mongoose.Schema.Types.ObjectId, ref: "Video", default: null } ],
     // Primary User Fields
-    youtubeChannelId: { type: String, default: null },
     googleRefreshToken : {type: String, default : null},
     inviteCode: { type: String, default: null },
     inviteCodeExpiry :{type : Date ,default : null },
@@ -34,17 +31,6 @@ const userSchema = new Schema(
   },
   { timestamps: true }
 );
-
-// Ensure unique indexes for optional fields
-userSchema.index(
-  { googleId: 1 },
-  { unique: true, partialFilterExpression: { googleId: { $exists: true, $ne: null } } }
-);
-userSchema.index(
-  { youtubeChannelId: 1 },
-  { unique: true, partialFilterExpression: { youtubeChannelId: { $exists: true, $ne: null } } }
-);
-
 
 // Pre hooks
 

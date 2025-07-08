@@ -8,8 +8,6 @@ import { APIResponse } from '../utils/APIResponse.js';
 
 dotenv.config();
 
-const SCOPES = ['https://www.googleapis.com/auth/youtube.upload'];
-
 const uploadOnYT = async (req, res) => {
     try {
         const { vid } = req?.query;

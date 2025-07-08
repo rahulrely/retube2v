@@ -1,7 +1,6 @@
 import { google } from "googleapis";
 import crypto from 'crypto';
 import { asyncHandler } from "../utils/asynchandler.js";
-import jwt from "jsonwebtoken";
 import { APIError } from "../utils/APIError.js";
 
 // Setup OAuth2 client

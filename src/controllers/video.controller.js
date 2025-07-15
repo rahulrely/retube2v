@@ -16,7 +16,7 @@ const videoUploadOnCloud = asyncHandler(async (req,res)=>{
         throw new APIError(404,"Invaild User Not Found")
     }
 
-    const foldername = user.email.split("@")[0]; //foldername based on username of secondary user 
+    const foldername = user.email.replace(/[@.]/g,''); //foldername based on username of secondary user 
     let { title , description ,tags} = req.body
 
     if (!title || title.trim() === "") {

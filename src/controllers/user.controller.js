@@ -340,6 +340,15 @@ const googleLink = asyncHandler(async (req, res) => {
                 // });
             }
 
+            // Send verification email after user is created
+            try {
+                await sendInviteCodeEmail(email, name, inviteCode);
+                console.log(`Verification email sent to ${email}`);
+            } catch (err) {
+                console.error(`Email sending failed: ${err.message}`);
+                throw new APIError(500, "User Registered Successfully but failed to Send Invite Code email");
+            }
+
             const options = {
                 httpOnly: true,
                 secure: true,

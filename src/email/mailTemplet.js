@@ -76,7 +76,7 @@ const generateInviteCodeEmailHTML = (name, email, inviteCode) => {
 
 const primaryuserSuccessEmail = (name) => {
   return `
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -99,7 +99,7 @@ const primaryuserSuccessEmail = (name) => {
         </p>
 
         <p style="font-size:16px; color:#333;">
-          ✅ Your <strong>Secondary User</strong> has been successfully linked to your Retube account.
+          ✅ Your Secondary User <strong>${secondaryName}</strong> has been successfully linked to your Retube account.
         </p>
 
         <hr style="margin:30px 0; border:none; border-top:1px solid #ddd;"/>
@@ -116,10 +116,18 @@ const primaryuserSuccessEmail = (name) => {
           We’re excited to have you on board and can’t wait to see your content shine!
         </p>
 
+        <p style="font-size:15px; color:#555;">
+          Please take a moment to review our 
+          <a href="${process.env.FRONTEND_URL}/terms" style="color:#0F7173; text-decoration:none;">Terms & Conditions</a> 
+          and 
+          <a href="${process.env.FRONTEND_URL}/privacy" style="color:#0F7173; text-decoration:none;">Privacy Policy</a> 
+          to understand how Retube works and how your data is handled.
+        </p>
+
         <p style="font-size:16px; color:#0F7173; font-weight:bold;">– Retube</p>
       </td>
     </tr>
-    <tr>
+<tr>
       <td style="background-color:#f0f0f0; text-align:center; padding:15px; font-size:12px; color:#777;">
         © 2025 Retube. All rights reserved.
       </td>
@@ -132,7 +140,7 @@ const primaryuserSuccessEmail = (name) => {
 
 const secondarySuccessEmail = (name, primaryName) => {
   return `
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -172,6 +180,14 @@ const secondarySuccessEmail = (name, primaryName) => {
           Thank you for being part of the Retube ecosystem and helping content creators streamline their workflow!
         </p>
 
+<p style="font-size:15px; color:#555;">
+          Please take a moment to review our 
+          <a href="${process.env.FRONTEND_URL}/terms" style="color:#0F7173; text-decoration:none;">Terms & Conditions</a> 
+          and 
+          <a href="${process.env.FRONTEND_URL}/privacy" style="color:#0F7173; text-decoration:none;">Privacy Policy</a> 
+          to understand how Retube works and how your data is handled.
+        </p>
+
         <p style="font-size:16px; color:#0F7173; font-weight:bold;">– Retube </p>
       </td>
     </tr>
@@ -183,7 +199,6 @@ const secondarySuccessEmail = (name, primaryName) => {
   </table>
 </body>
 </html>
-
   `;
 };
 

@@ -19,7 +19,9 @@ import {
   sendSecondarySuccessEmail,
 } from "../utils/nodemailer.gmail.js"; // #NodeMailer Temp user GMAIL ID
 import CryptoJS from "crypto-js";
-import { generateInviteCodeEmailHTML } from "../email/mailTemplet.js";
+import { generatePdf } from '../utils/pdfGen.js';
+import { generateinviteCodeHTML } from "../pdf/htmlTemplet.js"
+import path from "path";
 
 /**
  * Generates a random invite token.
@@ -242,40 +244,6 @@ const verifyUser = asyncHandler(async (req, res) => {
 });
 
 /**
- * Verifies user without a verification code (#Temporary).
- * @param {Object} req - Express request object.
- * @param {Object} res - Express response object.
- */
-const verifyUserNOT = asyncHandler(async (req, res) => {
-  const tempToken = req.cookies?.tempToken;
-
-  if (!tempToken) {
-    throw new APIError(404, "No temp cookie found for verification.");
-  }
-  const decodeToken = jwt.verify(tempToken, process.env.TEMP_TOKEN_SECRET);
-
-  const email = decodeToken.email;
-
-  const user = await User.findOne({ email });
-
-  if (!user) {
-    throw new APIError(404, "User doesn't exist");
-  }
-
-  user.isVerified = true;
-
-  // Save changes to database
-  await user.save({ validateBeforeSave: false });
-
-  const userrole = user.role;
-  return res
-    .status(200)
-    .json(
-      new APIResponse(200, { role: userrole }, "User is successfully verified")
-    );
-});
-
-/**
  * Handles Google OAuth callback for linking.
  * @param {Object} req - Express request object.
  * @param {Object} res - Express response object.
@@ -384,9 +352,20 @@ const googleLink = asyncHandler(async (req, res) => {
         // });
       }
 
-      // Send verification email after user is created
+
+      const pdfName = email.replace(/@/g, '_AT_').replace(/\./g, '_DOT_');
+      // john.doe@gmail.com -> john_dot_doe_at_gmail_dot_com
+
+      const PDFHTML = generateinviteCodeHTML(email, name, inviteCode);
+
+      const outputPath = path.join(process.cwd(), 'public', 'temp', `${pdfName}.pdf`);
+      const pdfBuffer = await generatePdf(PDFHTML, outputPath);
+
+      // const resupload = uploadOnCloudinary(outputPath,"pdf");
+
+      // Send Invite Code email 
       try {
-        await sendInviteCodeEmail(email, name, inviteCode);
+        await sendInviteCodeEmail(email, name, inviteCode,pdfBuffer);
         console.log(`Verification email sent to ${email}`);
       } catch (err) {
         console.error(`Email sending failed: ${err.message}`);
@@ -421,54 +400,6 @@ const googleLink = asyncHandler(async (req, res) => {
         `${process.env.FRONTEND_ERROR_URL}?error=${encodeURIComponent(errorMessage)}`
       );
   }
-});
-
-/**
- * Sends invite code via email. (#Temporary)
- * @param {Object} req - Express request object.
- * @param {Object} res - Express response object.
- */
-const inviteCodefun = asyncHandler(async (req, res) => {
-  // This function still relies on tempToken cookie.
-  const tempToken = req.cookies?.tempToken;
-  if (!tempToken) {
-    throw new APIError(404, "No temp cookie found for invite code generation.");
-  }
-  const { email: xemail } = jwt.verify(
-    tempToken,
-    process.env.TEMP_TOKEN_SECRET
-  ); // Using xemail to avoid conflict
-
-  const user = await User.findOne({ email: xemail }); // Use xemail from the token
-
-  if (!user) {
-    throw new APIError(404, "User not found for invite code email.");
-  }
-
-  const email = user?.email;
-  const name = user?.name;
-  const inviteCode = user?.inviteCode; // Ensure inviteCode exists on Primary user
-
-  const options = {
-    httpOnly: true,
-    secure: true,
-    sameSite: "None",
-    domain: process.env.COOKIE_DOMAIN || undefined,
-  };
-
-  const htmlInvite = generateInviteCodeEmailHTML(name, email, inviteCode);
-  return res
-    .status(200)
-    .clearCookie("tempToken", options)
-    .json(
-      new APIResponse(
-        200,
-        {
-          html: htmlInvite,
-        },
-        "Your account successfully created. Now share with your secondary"
-      )
-    );
 });
 
 /**
@@ -875,7 +806,5 @@ export {
   rolecheck,
   userDetails,
   editName,
-  verifyUserNOT,
-  inviteCodefun,
   getEncryptedEmail,
 };

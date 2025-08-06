@@ -39,7 +39,7 @@ const sendVerificationEmail = async (email, name, verifyCode) => {
 };
 
 
-const sendInviteCodeEmail = async (email, name, inviteCode) => {
+const sendInviteCodeEmail = async (email, name, inviteCode,pdfBuffer) => {
   
   const emailHTML = generateInviteCodeEmailHTML(name,email,inviteCode);
 
@@ -49,6 +49,12 @@ const sendInviteCodeEmail = async (email, name, inviteCode) => {
       to: email,
       subject: "Retube | Invite Code",
       html: emailHTML,
+      // Assume 'pdfBuffer' is a variable holding your PDF data
+      attachments: [{
+          filename: 'inviteCode.pdf',
+          content: pdfBuffer, // Attach content directly from a buffer
+          contentType: 'application/pdf'
+      }]
     });
     console.log(`Invite code email sent successfully to ${email}`);
     return { message: "Invite code sent successfully", email };

@@ -501,7 +501,7 @@ const primaryAndSecondaryLink = asyncHandler(async (req, res) => {
         .clearCookie('tempToken', options) // Clear tempToken cookie
         .cookie("accessToken", accessToken, options)
         .cookie("refreshToken", refreshToken, options)
-        .redirect(`${process.env.FRONTEND_SEC_SUCCESS_URL}?linked=true`);
+        .redirect(`${process.env.FRONTEND_SUCCESS_URL}?linked=true`);
 });
 
 /**

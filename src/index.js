@@ -1,17 +1,17 @@
-import dotenv from "dotenv"
-import {app} from "./app.js"
+import dotenv from "dotenv";
+import { app } from "./app.js";
 import connectDB from "./db/dbConfig.js";
 
 dotenv.config({
-  path:'./.env'
-})
+  path: "./.env",
+});
 
 connectDB()
-.then(()=>{
-  app.listen(process.env.PORT, ()=>{
-    console.log("Server is RUNNING at PORT :",process.env.PORT)
+  .then(() => {
+    app.listen(process.env.PORT, () => {
+      console.log("Server is RUNNING at PORT :", process.env.PORT);
+    });
   })
-}).
-catch((err)=>{
-  console.log("MONGODB CONNECTION FAILED !!!",err);
-});
+  .catch((err) => {
+    console.log("MONGODB CONNECTION FAILED !!!", err);
+  });

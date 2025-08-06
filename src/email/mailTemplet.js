@@ -22,7 +22,7 @@ const generateVerificationEmailHTML = (name, verifyCode) => {
   `;
 };
 
-const generateInviteCodeEmailHTML = (name ,email,inviteCode) =>{
+const generateInviteCodeEmailHTML = (name, email, inviteCode) => {
   return `
     <!DOCTYPE html>
 <html lang="en">
@@ -31,8 +31,8 @@ const generateInviteCodeEmailHTML = (name ,email,inviteCode) =>{
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Retube Invite Details</title>
 </head>
-<body style="margin:0; padding:0; font-family:Arial, sans-serif; background-color:#121212; color:#e0e0e0;">
-  <table align="center" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px; margin:auto; background:#1e1e1e; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+<body style="margin:0; padding:0; font-family:Arial, sans-serif; background-color:#f6f6f6;">
+  <table align="center" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px; margin:auto; background:#ffffff; border-radius:8px; box-shadow:0 4px 8px rgba(0,0,0,0.05);">
     <tr>
       <td style="background-color:#0F7173; padding:20px 40px; text-align:center; border-top-left-radius:8px; border-top-right-radius:8px;">
         <h1 style="color:#ffffff; margin:0; font-size:28px;">Retube Invitation</h1>
@@ -40,43 +40,41 @@ const generateInviteCodeEmailHTML = (name ,email,inviteCode) =>{
     </tr>
     <tr>
       <td style="padding:30px 40px;">
-        <p style="font-size:16px; color:#e0e0e0;">Hi ${name},</p>
-        <p style="font-size:16px; color:#cccccc;">
-          You’ve generated an invite for a secondary user on <strong style="color:#ffffff;">Retube</strong>.
+        <p style="font-size:16px; color:#333;">Hi ${name},</p>
+        <p style="font-size:16px; color:#333;">
+          You’ve generated an invite for a secondary user on <strong>Retube</strong>.
           Please share the details below with the user you want to invite.
         </p>
-        <p style="font-size:16px; color:#cccccc;">They must use this information to register:</p>
+        <p style="font-size:16px; color:#333;">They must use this information to register:</p>
         
         <div style="margin-top:20px;">
-          <p style="font-size:15px; margin:8px 0;"><strong>Your Email:</strong> <span style="color:#ffffff;">${email}</span></p>
+          <p style="font-size:15px; margin:8px 0;"><strong>Your Email:</strong> ${email}</p>
           <p style="font-size:15px; margin:8px 0;"><strong>Invite Code:</strong></p>
-          <p style="font-size:20px; font-weight:bold; color:#0F7173; background-color:#2e2e2e; padding:10px 15px; border-radius:5px; text-align:center;">
+          <p style="font-size:20px; font-weight:bold; color:#0F7173; background-color:#f0f0f0; padding:10px 15px; border-radius:5px; text-align:center;">
             ${inviteCode}
           </p>
         </div>
 
-        <p style="font-size:14px; color:#aaaaaa; margin-top:30px;">
+        <p style="font-size:14px; color:#777; margin-top:30px;">
           Please note: The invited secondary user must complete registration and link their account using the above details within <strong>10 days</strong>. Otherwise, your account may be deleted from Retube for security and policy compliance.
         </p>
 
-        <p style="font-size:16px; margin-top:40px; color:#e0e0e0;">Thanks for using Retube,</p>
+        <p style="font-size:16px; margin-top:40px;">Thanks for using Retube,</p>
         <p style="font-size:16px; color:#0F7173; font-weight:bold;">Retube</p>
       </td>
     </tr>
     <tr>
-      <td style="background-color:#1a1a1a; text-align:center; padding:15px; font-size:12px; color:#888888;">
+      <td style="background-color:#f0f0f0; text-align:center; padding:15px; font-size:12px; color:#777;">
         © 2025 Retube. All rights reserved.
       </td>
     </tr>
   </table>
-  <span style="color:#f87171;">Invite code is visible just this once — please copy it now..</span>
 </body>
 </html>
-
   `;
-}
+};
 
-const primaryuserSuccessEmail = (name) =>{
+const primaryuserSuccessEmail = (name) => {
   return `
     <!DOCTYPE html>
 <html lang="en">
@@ -130,9 +128,9 @@ const primaryuserSuccessEmail = (name) =>{
 </body>
 </html>
   `;
-}
+};
 
-const secondarySuccessEmail = (name,primaryName) =>{
+const secondarySuccessEmail = (name, primaryName) => {
   return `
   <!DOCTYPE html>
 <html lang="en">
@@ -186,12 +184,12 @@ const secondarySuccessEmail = (name,primaryName) =>{
 </body>
 </html>
 
-  `
-}
+  `;
+};
 
 export {
   generateVerificationEmailHTML,
   generateInviteCodeEmailHTML,
   primaryuserSuccessEmail,
-  secondarySuccessEmail
+  secondarySuccessEmail,
 };

@@ -34,6 +34,21 @@ app.get("/api/v1/hello", (req, res) => {
   res.json({ message: "Retube's Express Backend is Connected with You !" });
 });
 
+app.get("/",(req,res)=>{
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Retube</title>
+    </head>
+    <body>
+    <a href="https://retube.vercel.app" style={text-decoration:none}>Visit Retube</a>
+    </body>
+    </html>
+`);});
+
 app.use(
   express.json({
     limit: "20kb",

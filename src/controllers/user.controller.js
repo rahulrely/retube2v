@@ -19,9 +19,6 @@ import {
   sendSecondarySuccessEmail,
 } from "../utils/nodemailer.gmail.js"; // #NodeMailer Temp user GMAIL ID
 import CryptoJS from "crypto-js";
-import { generatePdf } from '../utils/pdfGen.js';
-import { generateinviteCodeHTML } from "../pdf/htmlTemplet.js"
-import path from "path";
 
 /**
  * Generates a random invite token.

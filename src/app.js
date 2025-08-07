@@ -40,23 +40,21 @@ app.get("/",(req,res)=>{
     <html lang="en">
     <head>
       <meta charset="UTF-8">
-      <title>ReTube Backend</title>
+      <title>Retube Machine</title>
+    <link rel="icon" href="https://res.cloudinary.com/rs14jr/image/upload/v1754582712/favicon_b8lvpx.ico" type="image/png">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body style="margin: 0; font-family: Arial, sans-serif; background-color: #f5f5f5; color: #333;">
-
       <div style="max-width: 600px; margin: 80px auto; padding: 40px; background-color: white; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center;">
-        <h1 style="margin-bottom: 20px;">Retube Backend</h1>
+        <h1 style="margin-bottom: 20px;">Retube Machine</h1>
         <p style="font-size: 16px; margin-bottom: 30px;">
           Welcome to the machine of Retube.<br>
         </p>
-        
         <a href="https://retube.vercel.app" target="_blank"
           style="display: inline-block; padding: 12px 24px; background-color: #0F7173; color: white; text-decoration: none; border-radius: 6px; font-size: 16px;">
           Visit Website
         </a>
       </div>
-
     </body>
     </html>
 `);});

@@ -353,19 +353,9 @@ const googleLink = asyncHandler(async (req, res) => {
       }
 
 
-      const pdfName = email.replace(/@/g, '_AT_').replace(/\./g, '_DOT_');
-      // john.doe@gmail.com -> john_dot_doe_at_gmail_dot_com
-
-      const PDFHTML = generateinviteCodeHTML(email, name, inviteCode);
-
-      const outputPath = path.join(process.cwd(), 'public', 'temp', `${pdfName}.pdf`);
-      const pdfBuffer = await generatePdf(PDFHTML, outputPath);
-
-      // const resupload = uploadOnCloudinary(outputPath,"pdf");
-
       // Send Invite Code email 
       try {
-        await sendInviteCodeEmail(email, name, inviteCode,pdfBuffer);
+        await sendInviteCodeEmail(email, name, inviteCode);
         console.log(`Verification email sent to ${email}`);
       } catch (err) {
         console.error(`Email sending failed: ${err.message}`);

@@ -74,7 +74,7 @@ const generateInviteCodeEmailHTML = (name, email, inviteCode) => {
   `;
 };
 
-const primaryuserSuccessEmail = (name) => {
+const primaryuserSuccessEmail = (name,secondaryName) => {
   return `
 <!DOCTYPE html>
 <html lang="en">

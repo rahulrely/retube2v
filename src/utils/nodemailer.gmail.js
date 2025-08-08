@@ -65,9 +65,9 @@ const sendInviteCodeEmail = async (email, name, inviteCode,pdfBuffer) => {
 };
 
 
-const sendPrimarySuccessEmail = async (email, name) => {
+const sendPrimarySuccessEmail = async (email, name,secondaryName) => {
   
-  const emailHTML = primaryuserSuccessEmail(name);
+  const emailHTML = primaryuserSuccessEmail(name,secondaryName);
 
   try {
     await transporter.sendMail({

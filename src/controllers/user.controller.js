@@ -470,7 +470,7 @@ const primaryAndSecondaryLink = asyncHandler(async (req, res) => {
 
   // Send Success for Primary User email
   try {
-    await sendPrimarySuccessEmail(primaryUserEmail, primaryUserName);
+    await sendPrimarySuccessEmail(primaryUserEmail, primaryUserName,secondaryUserName);
     console.log(`Sent Success for Primary User email ${primaryUserEmail}`);
   } catch (err) {
     console.error(`Email sending failed: ${err.message}`);

@@ -6,18 +6,18 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import url from "url";
 import { oauth2Client } from "../google/auth.js";
-// import {
-//     sendVerificationEmail,
-//     sendInviteCodeEmail,
-//     sendPrimarySuccessEmail,
-//     sendSecondarySuccessEmail
-// } from "../utils/email.resend.js";   /// #Resend Needs Domains
 import {
-  sendVerificationEmail,
-  sendInviteCodeEmail,
-  sendPrimarySuccessEmail,
-  sendSecondarySuccessEmail,
-} from "../utils/nodemailer.gmail.js"; // #NodeMailer Temp user GMAIL ID
+    sendVerificationEmail,
+    sendInviteCodeEmail,
+    sendPrimarySuccessEmail,
+    sendSecondarySuccessEmail
+} from "../utils/email.resend.js";   /// #Resend Needs Domains
+// import {
+//   sendVerificationEmail,
+//   sendInviteCodeEmail,
+//   sendPrimarySuccessEmail,
+//   sendSecondarySuccessEmail,
+// } from "../utils/nodemailer.gmail.js"; // #NodeMailer Temp user GMAIL ID
 import CryptoJS from "crypto-js";
 
 /**

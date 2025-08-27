@@ -50,7 +50,7 @@ app.get("/",(req,res)=>{
         <p style="font-size: 16px; margin-bottom: 30px;">
           Welcome to the machine of Retube.<br>
         </p>
-        <a href="https://retube.vercel.app" target="_blank"
+        <a href="https://retube.live" target="_blank"
           style="display: inline-block; padding: 12px 24px; background-color: #0F7173; color: white; text-decoration: none; border-radius: 6px; font-size: 16px;">
           Visit Website
         </a>

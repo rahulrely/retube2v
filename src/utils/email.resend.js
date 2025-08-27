@@ -18,7 +18,7 @@ const sendVerificationEmail = async (email,name,verifyCode) => {
 
   try {
     const { data, error } = await resend.emails.send({
-      from: "Retube <noreply@app.rahulrely.tech>",
+      from: "Retube <noreply@retube.live>",
       to: [email],
       subject: "Retube | Verification Code",
       html: emailHTML,
@@ -42,7 +42,7 @@ const sendInviteCodeEmail = async (email,name,inviteCode) => {
 
   try {
     const { data, error } = await resend.emails.send({
-      from: "Retube <noreply@app.rahulrely.tech>",
+      from: "Retube <noreply@retube.live>",
       to: [email],
       subject: "Retube | Invite Code",
       html: emailHTML,
@@ -66,7 +66,7 @@ const sendPrimarySuccessEmail = async (email,name) => {
 
   try {
     const { data, error } = await resend.emails.send({
-      from: "Retube <noreply@app.rahulrely.tech>",
+      from: "Retube <noreply@retube.live>",
       to: [email],
       subject: "Retube | Successful Registration",
       html: emailHTML,
@@ -90,7 +90,7 @@ const sendSecondarySuccessEmail = async (email,name) => {
 
   try {
     const { data, error } = await resend.emails.send({
-      from: "Retube <noreply@app.rahulrely.tech>",
+      from: "Retube <noreply@retube.live>",
       to: [email],
       subject: "Retube | Successful Registration",
       html: emailHTML,

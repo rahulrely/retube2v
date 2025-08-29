@@ -83,7 +83,7 @@ const sendPrimarySuccessEmail = async (email,name) => {
 };
 
 // Function to send a secondary user success email
-const sendSecondarySuccessEmail = async (email,name) => {
+const sendSecondarySuccessEmail = async (email,name,primaryName) => {
 
   // Email HTML template
   const emailHTML = secondarySuccessEmail(name,primaryName)

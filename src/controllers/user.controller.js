@@ -605,7 +605,7 @@ const sendVerifyCodeSecuirty = asyncHandler(async (req, res) => {
 const passwordReset = asyncHandler(async (req, res) => {
   const user = req.user; // middleware incoming
 
-  const { newPassword, verifyCode } = req.body;
+  const { password, securityCode } = req.body;
 
   const freshUser = await User.findById(user._id);
 
@@ -619,12 +619,12 @@ const passwordReset = asyncHandler(async (req, res) => {
   }
 
   // Verify if entered code matches stored code
-  if (freshUser.securityCode !== verifyCode) {
+  if (freshUser.securityCode !== securityCode) {
     throw new APIError(400, "Invalid verification code");
   }
 
   // Updated password
-  freshUser.password = newPassword;
+  freshUser.password = password;
   freshUser.securityCode = null; // Removed verification code after use
   freshUser.securityCodeExpiry = null;
 

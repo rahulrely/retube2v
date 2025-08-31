@@ -566,8 +566,10 @@ const loginUser = asyncHandler(async (req, res) => {
  * @param {Object} req - Express request object.
  * @param {Object} res - Express response object.
  */
-const passwordReset = asyncHandler(async (req, res) => {
+const sendVerifyCodeSecuirty = asyncHandler(async (req, res) => {
   const user = req.user; // middleware incoming
+
+  console.log(user)
 
   const email = user.email;
   const name = user.name;
@@ -576,8 +578,8 @@ const passwordReset = asyncHandler(async (req, res) => {
   const verifyCodeGen = genVerificationCode();
   const verifyCodeExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
 
-  user.forgetPasswordCode = verifyCodeGen;
-  user.forgetPasswordCodeExpiry = verifyCodeExpiry;
+  user.securityCode = verifyCodeGen;
+  user.securityCodeExpiry = verifyCodeExpiry;
 
   await user.save({ validateBeforeSave: false }); // Save code in DB
 
@@ -590,8 +592,19 @@ const passwordReset = asyncHandler(async (req, res) => {
     throw new APIError(500, "Password Reset failed email");
   }
 
-  // Get user input from body (This part of the code is usually in a separate endpoint
-  // for actual password reset verification, not the initiation. Leaving as-is per original structure)
+  return res
+    .status(200)
+    .json(new APIResponse(200, {}, "Verification Code sent Successfully"));
+
+});
+/**
+ * Password Reset.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ */
+const passwordReset = asyncHandler(async (req, res) => {
+  const user = req.user; // middleware incoming
+
   const { newPassword, verifyCode } = req.body;
 
   const freshUser = await User.findById(user._id);
@@ -600,21 +613,20 @@ const passwordReset = asyncHandler(async (req, res) => {
     throw new APIError(400, "User not found");
   }
   // Retrieve stored expiry from DB
-  const isCodeValid =
-    freshUser.verifyCodeExpiry && freshUser.verifyCodeExpiry > Date.now();
+  const isCodeValid = freshUser.securityCodeExpiry && freshUser.securityCodeExpiry > Date.now();
   if (!isCodeValid) {
     throw new APIError(400, "Verification code validity expired");
   }
 
   // Verify if entered code matches stored code
-  if (freshUser.forgetPasswordCode !== verifyCode) {
+  if (freshUser.securityCode !== verifyCode) {
     throw new APIError(400, "Invalid verification code");
   }
 
   // Updated password
   freshUser.password = newPassword;
-  freshUser.forgetPasswordCode = null; // Removed verification code after use
-  freshUser.forgetPasswordCodeExpiry = null;
+  freshUser.securityCode = null; // Removed verification code after use
+  freshUser.securityCodeExpiry = null;
 
   await freshUser.save({ validateBeforeSave: false });
 
@@ -788,6 +800,7 @@ export {
   googleLink,
   primaryAndSecondaryLink,
   loginUser,
+  sendVerifyCodeSecuirty,
   passwordReset,
   logoutUser,
   rolecheck,

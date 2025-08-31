@@ -6,6 +6,7 @@ import {
   verifyUser,
   googleLink,
   primaryAndSecondaryLink,
+  sendVerifyCodeSecuirty,
   passwordReset,
   registerUser,
   rolecheck,
@@ -31,6 +32,10 @@ router.route("/linkprimary").post(primaryAndSecondaryLink); // Example: POST wit
 
 router.route("/login").post(loginUser);
 
+router.route("/profile/verificationcode").get(verifyJwt,sendVerifyCodeSecuirty);
+
+router.route("/profile/passwordreset").post(verifyJwt,passwordReset);
+
 ///Google ##Start
 
 // Step 0:
@@ -47,8 +52,6 @@ router.route("/google/callback").get(googleLink);
 //Secured routes
 
 router.route("/rolecheck").get(verifyJwt, rolecheck);
-
-router.route("/profile/passwordreset").post(verifyJwt, passwordReset); //password change
 
 router.route("/logout").post(verifyJwt, logoutUser);
 

@@ -7,11 +7,11 @@ import jwt from "jsonwebtoken";
 import url from "url";
 import { oauth2Client } from "../google/auth.js";
 import {
-    sendVerificationEmail,
-    sendInviteCodeEmail,
-    sendPrimarySuccessEmail,
-    sendSecondarySuccessEmail
-} from "../utils/email.resend.js";   /// #Resend Needs Domains
+  sendVerificationEmail,
+  sendInviteCodeEmail,
+  sendPrimarySuccessEmail,
+  sendSecondarySuccessEmail,
+} from "../utils/email.resend.js"; /// #Resend Needs Domains
 // import {
 //   sendVerificationEmail,
 //   sendInviteCodeEmail,
@@ -19,6 +19,7 @@ import {
 //   sendSecondarySuccessEmail,
 // } from "../utils/nodemailer.gmail.js"; // #NodeMailer Temp user GMAIL ID
 import CryptoJS from "crypto-js";
+import { getUserChannelUrl } from "../google/channel.js";
 
 /**
  * Generates a random invite token.
@@ -330,6 +331,11 @@ const googleLink = asyncHandler(async (req, res) => {
         );
       }
 
+      //FEAT : Adding User YouTube Channel URL in DB
+      const youtubeChannelURL = await getUserChannelUrl(googleRefreshToken);
+      user.youtubeChannelURL = youtubeChannelURL;
+      // END OF SECTION
+
       user.googleRefreshToken = googleRefreshToken; //Saving Google Refresh Token in MongoDB
 
       const inviteCode = user.role === "Primary" ? user.inviteCode : undefined; // Only primary users have invite codes
@@ -349,8 +355,7 @@ const googleLink = asyncHandler(async (req, res) => {
         // });
       }
 
-
-      // Send Invite Code email 
+      // Send Invite Code email
       try {
         await sendInviteCodeEmail(email, name, inviteCode);
         console.log(`Verification email sent to ${email}`);
@@ -470,7 +475,11 @@ const primaryAndSecondaryLink = asyncHandler(async (req, res) => {
 
   // Send Success for Primary User email
   try {
-    await sendPrimarySuccessEmail(primaryUserEmail, primaryUserName ,secondaryUserName);
+    await sendPrimarySuccessEmail(
+      primaryUserEmail,
+      primaryUserName,
+      secondaryUserName
+    );
     console.log(`Sent Success for Primary User email ${primaryUserEmail}`);
   } catch (err) {
     console.error(`Email sending failed: ${err.message}`);
@@ -569,7 +578,7 @@ const loginUser = asyncHandler(async (req, res) => {
 const sendVerifyCodeSecuirty = asyncHandler(async (req, res) => {
   const user = req.user; // middleware incoming
 
-  console.log(user)
+  console.log(user);
 
   const email = user.email;
   const name = user.name;
@@ -595,7 +604,6 @@ const sendVerifyCodeSecuirty = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new APIResponse(200, {}, "Verification Code sent Successfully"));
-
 });
 /**
  * Password Reset.
@@ -613,7 +621,8 @@ const passwordReset = asyncHandler(async (req, res) => {
     throw new APIError(400, "User not found");
   }
   // Retrieve stored expiry from DB
-  const isCodeValid = freshUser.securityCodeExpiry && freshUser.securityCodeExpiry > Date.now();
+  const isCodeValid =
+    freshUser.securityCodeExpiry && freshUser.securityCodeExpiry > Date.now();
   if (!isCodeValid) {
     throw new APIError(400, "Verification code validity expired");
   }
@@ -718,7 +727,12 @@ const userDetails = asyncHandler(async (req, res) => {
         email: user.email,
         role: user.role,
         isVerified: user.isVerified,
+        subscription : user.subscription,
+        subscriptionExpiry : user.subscriptionExpiry,
+        usedStorage : user.usedStorage,
+        isVerified : user.isVerified,
         // Only include linked user details if linkedUser exists
+        ...(user.youtubeChannelURL && { youtubeChannelURL: user.youtubeChannelURL }),
         ...(linkedUser && { linkedUserName: linkedUser.name }),
         ...(linkedUser && { linkedUserEmail: linkedUser.email }),
       },

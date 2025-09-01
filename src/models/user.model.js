@@ -2,6 +2,9 @@ import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
+// One year in milliseconds for subscription expiry
+const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+
 // Define User Schema
 const userSchema = new Schema(
   {
@@ -23,7 +26,14 @@ const userSchema = new Schema(
     verifyCodeExpiry: { type: Date, default: null },
     refreshToken: { type: String, default: null },
     tempToken: { type: String, default: null },
-
+    usedStorage: { type: Number, default: 2 * 1024 * 1024 * 1024 }, // 2GB Free user default combined 4GB
+    subscription: {
+      type: String,
+      enum: ["Free", "Premium", "Ultimate"],
+      required: true,
+      default: "Free",
+    },
+    subscriptionExpiry: { type: Date, default: () => new Date(Date.now() + ONE_YEAR_MS) },
     rawVideoList: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Raw", default: null },
     ],
@@ -34,6 +44,7 @@ const userSchema = new Schema(
     googleRefreshToken: { type: String, default: null },
     inviteCode: { type: String, default: null },
     inviteCodeExpiry: { type: Date, default: null },
+    youtubeChannelURL: { type: String, default: null },
 
     linkedUser: {
       type: mongoose.Schema.Types.ObjectId,

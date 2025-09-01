@@ -5,6 +5,7 @@ import Video from "../models/video.model.js"; // MongoDB Video Model
 import { APIError } from "../utils/APIError.js";
 import { deleteVideoFromCloudinary } from "../utils/cloundinary.js";
 import { APIResponse } from "../utils/APIResponse.js";
+import { oauth2Client } from "../google/auth.js";
 
 dotenv.config();
 
@@ -52,11 +53,6 @@ const uploadOnYT = async (req, res) => {
     }
 
     // Generate new Google access token from refresh token
-    const oauth2Client = new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET,
-      process.env.GOOGLE_CLIENT_URL_UPLOAD
-    );
     oauth2Client.setCredentials({ refresh_token: user.googleRefreshToken });
 
     // YouTube API client

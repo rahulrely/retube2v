@@ -26,7 +26,8 @@ const userSchema = new Schema(
     verifyCodeExpiry: { type: Date, default: null },
     refreshToken: { type: String, default: null },
     tempToken: { type: String, default: null },
-    usedStorage: { type: Number, default: 2 * 1024 * 1024 * 1024 }, // 2GB Free user default combined 4GB
+    usedStorage: { type: Number, default: 0 },
+    totalStoarge : { type: Number, default: 2 * 1024 * 1024 * 1024 }, // 2GB Free user default combined 4GB
     subscription: {
       type: String,
       enum: ["Free", "Premium", "Ultimate"],

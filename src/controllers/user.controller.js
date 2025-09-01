@@ -731,6 +731,7 @@ const userDetails = asyncHandler(async (req, res) => {
         subscriptionExpiry : user.subscriptionExpiry,
         usedStorage : user.usedStorage,
         isVerified : user.isVerified,
+        totalStoarge : user.totalStoarge,
         // Only include linked user details if linkedUser exists
         ...(user.youtubeChannelID && { youtubeChannelID: user.youtubeChannelID }),
         ...(linkedUser && { linkedUserName: linkedUser.name }),

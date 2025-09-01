@@ -332,8 +332,8 @@ const googleLink = asyncHandler(async (req, res) => {
       }
 
       //FEAT : Adding User YouTube Channel URL in DB
-      const youtubeChannelURL = await getUserChannelUrl(googleRefreshToken);
-      user.youtubeChannelURL = youtubeChannelURL;
+      const youtubeChannelID = await getUserChannelUrl(googleRefreshToken);
+      user.youtubeChannelID = youtubeChannelID;
       // END OF SECTION
 
       user.googleRefreshToken = googleRefreshToken; //Saving Google Refresh Token in MongoDB
@@ -732,7 +732,7 @@ const userDetails = asyncHandler(async (req, res) => {
         usedStorage : user.usedStorage,
         isVerified : user.isVerified,
         // Only include linked user details if linkedUser exists
-        ...(user.youtubeChannelURL && { youtubeChannelURL: user.youtubeChannelURL }),
+        ...(user.youtubeChannelID && { youtubeChannelID: user.youtubeChannelID }),
         ...(linkedUser && { linkedUserName: linkedUser.name }),
         ...(linkedUser && { linkedUserEmail: linkedUser.email }),
       },

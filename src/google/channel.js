@@ -29,7 +29,7 @@ try {
     const channelUrl = `https://www.youtube.com/channel/${channelId}`;
     console.log(`User's Channel URL: ${channelUrl}`);
     
-    return channelUrl;
+    return channelId;
     } else {
     console.log('No channel found for the authenticated user.');
     return null;
